@@ -1,4 +1,3 @@
-
 // This service handles interactions with the Arbitrum Stylus blockchain
 
 // Mock wallet state
@@ -78,34 +77,20 @@ export const connectWallet = async () => {
 };
 
 // Get wallet status
-export const getWalletStatus = async () => {
-  // If already connected, return current state
-  if (walletState.connected) {
-    return walletState;
-  }
+export const getWalletStatus = () => {
+  // Return current state without async operation
+  // This ensures we get the most up-to-date state for balance checks
   
-  try {
-    // Try to connect
-    return await connectWallet();
-  } catch (error) {
-    console.error("Failed to connect wallet:", error);
-    
-    // For demo purposes, set a mock wallet in development
-    if (process.env.NODE_ENV === 'development') {
-      walletState = {
-        connected: true,
-        address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-        balance: 10.0 // 10 ETH for testing
-      };
-      return walletState;
-    }
-    
-    return {
-      connected: false,
-      address: "",
-      balance: 0
+  // For demo purposes in development, ensure wallet is initialized
+  if (process.env.NODE_ENV === 'development' && !walletState.connected) {
+    walletState = {
+      connected: true,
+      address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      balance: 10.0 // 10 ETH for testing
     };
   }
+  
+  return walletState;
 };
 
 // Disconnect wallet
@@ -116,6 +101,12 @@ export const disconnectWallet = () => {
     balance: 0
   };
   
+  return walletState;
+};
+
+// Update wallet balance (for game payouts/losses)
+export const updateWalletBalance = (newBalance: number) => {
+  walletState.balance = newBalance;
   return walletState;
 };
 

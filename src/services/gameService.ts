@@ -1,3 +1,4 @@
+
 import { getWalletStatus } from "./arbitrumService";
 import { GameType, GameResult, GameStats } from "@/types/games";
 
@@ -60,6 +61,10 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
   
   console.log("Game validation passed, proceeding with game");
   
+  // First deduct the bet amount from the wallet
+  // This simulates the transaction confirmation that would happen on the blockchain
+  wallet.balance = wallet.balance - betAmount;
+  
   // Simulate blockchain transaction
   // In a real app, this would call the smart contract
   const transactionPromise = new Promise<void>((resolve) => {
@@ -108,19 +113,20 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
   gameStats.totalGames += 1;
   gameStats.totalWagered += betAmount;
   
+  // If won, add winnings to wallet balance
   if (won) {
     gameStats.wins += 1;
     gameStats.totalPayout += payout;
     
-    // Update wallet balance (simulate winning)
-    wallet.balance = wallet.balance - betAmount + payout;
-  } else {
-    // Update wallet balance (simulate losing)
-    wallet.balance = wallet.balance - betAmount;
+    // Update wallet balance with winnings
+    wallet.balance += payout;
   }
   
   // Calculate win rate
   gameStats.winRate = (gameStats.wins / gameStats.totalGames) * 100;
+  
+  // In a real app, this would trigger a state update in the wallet
+  // We'll use the walletState from arbitrumService to update the global state
   
   return result;
 };

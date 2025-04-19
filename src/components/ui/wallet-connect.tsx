@@ -19,7 +19,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
   });
 
   useEffect(() => {
-    const checkWalletStatus = async () => {
+    const checkWalletStatus = () => {
       try {
         // Check if MetaMask is installed
         const metaMaskInstalled = isMetaMaskInstalled();
@@ -31,7 +31,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
           }));
         }
         
-        const status = await getWalletStatus();
+        const status = getWalletStatus();
         setWalletState(prev => ({
           ...prev,
           connected: status.connected,
@@ -66,11 +66,20 @@ export function WalletConnect({ className }: WalletConnectProps) {
       window.ethereum.on('accountsChanged', handleAccountsChanged);
       window.ethereum.on('chainChanged', handleChainChanged);
       
+      // Set up an interval to check wallet status periodically
+      // This ensures the UI stays in sync with the actual wallet balance
+      const intervalId = setInterval(checkWalletStatus, 2000);
+      
       return () => {
         window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
         window.ethereum?.removeListener('chainChanged', handleChainChanged);
+        clearInterval(intervalId);
       };
     }
+    
+    // For test mode, set up periodic balance checks
+    const intervalId = setInterval(checkWalletStatus, 2000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleConnect = async () => {
