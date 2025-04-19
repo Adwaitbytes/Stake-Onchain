@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
 import { getUserGameStats } from "@/services/gameService";
-import { getWalletStatus } from "@/services/mockBlockchainService";
+import { getWalletStatus } from "@/services/arbitrumService";
 import { GameStats } from "@/types/games";
 import { Dices, CoinsIcon, Dice1, Trophy, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,28 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export default function Games() {
   const [stats, setStats] = useState<GameStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const wallet = getWalletStatus();
+  const [wallet, setWallet] = useState({ connected: false, address: "", balance: 0 });
+  
+  useEffect(() => {
+    const fetchWallet = async () => {
+      try {
+        const walletStatus = await getWalletStatus();
+        setWallet(walletStatus);
+      } catch (error) {
+        console.error("Failed to get wallet status:", error);
+      }
+    };
+    
+    fetchWallet();
+  }, []);
   
   useEffect(() => {
     const fetchStats = async () => {
+      if (!wallet.connected) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         const gameStats = await getUserGameStats();
         setStats(gameStats);
@@ -27,7 +46,7 @@ export default function Games() {
     };
     
     fetchStats();
-  }, []);
+  }, [wallet.connected]);
   
   const netProfit = stats ? stats.totalPayout - stats.totalWagered : 0;
   const profitPercentage = stats && stats.totalWagered > 0 

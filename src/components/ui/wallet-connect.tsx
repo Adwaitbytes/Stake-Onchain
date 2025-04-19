@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from "react";
-import { connectWallet, disconnectWallet, getWalletStatus } from "@/services/mockBlockchainService";
+import { connectWallet, disconnectWallet, getWalletStatus } from "@/services/arbitrumService";
 import { Button } from "@/components/ui/button";
 import { Wallet } from "lucide-react";
+import { toast } from "sonner";
 
 interface WalletConnectProps {
   className?: string;
@@ -17,13 +18,47 @@ export function WalletConnect({ className }: WalletConnectProps) {
   });
 
   useEffect(() => {
-    const status = getWalletStatus();
-    setWalletState(prev => ({
-      ...prev,
-      connected: status.connected,
-      address: status.address,
-      balance: status.balance
-    }));
+    const checkWalletStatus = async () => {
+      try {
+        const status = await getWalletStatus();
+        setWalletState(prev => ({
+          ...prev,
+          connected: status.connected,
+          address: status.address,
+          balance: status.balance
+        }));
+      } catch (error) {
+        console.error("Failed to get wallet status:", error);
+      }
+    };
+    
+    checkWalletStatus();
+    
+    // Set up event listeners for wallet changes
+    if (window.ethereum) {
+      const handleAccountsChanged = async (accounts: string[]) => {
+        if (accounts.length === 0) {
+          // User disconnected their wallet
+          await handleDisconnect();
+        } else {
+          // Account changed, update state
+          checkWalletStatus();
+        }
+      };
+      
+      const handleChainChanged = () => {
+        // Chain changed, refresh the page
+        window.location.reload();
+      };
+      
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      window.ethereum.on('chainChanged', handleChainChanged);
+      
+      return () => {
+        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum?.removeListener('chainChanged', handleChainChanged);
+      };
+    }
   }, []);
 
   const handleConnect = async () => {
@@ -36,20 +71,28 @@ export function WalletConnect({ className }: WalletConnectProps) {
         balance,
         isConnecting: false
       });
+      toast.success("Wallet connected successfully");
     } catch (error) {
       console.error("Failed to connect wallet:", error);
+      toast.error("Failed to connect wallet. Please make sure MetaMask is installed and unlocked.");
       setWalletState(prev => ({ ...prev, isConnecting: false }));
     }
   };
 
-  const handleDisconnect = () => {
-    disconnectWallet();
-    setWalletState({
-      connected: false,
-      address: "",
-      balance: 0,
-      isConnecting: false
-    });
+  const handleDisconnect = async () => {
+    try {
+      await disconnectWallet();
+      setWalletState({
+        connected: false,
+        address: "",
+        balance: 0,
+        isConnecting: false
+      });
+      toast.success("Wallet disconnected");
+    } catch (error) {
+      console.error("Failed to disconnect wallet:", error);
+      toast.error("Failed to disconnect wallet");
+    }
   };
 
   const formatAddress = (address: string) => {

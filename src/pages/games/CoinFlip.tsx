@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { getWalletStatus } from "@/services/mockBlockchainService";
+import { getWalletStatus } from "@/services/arbitrumService";
 import { playGame, getUserGameHistory, getUserGameStats } from "@/services/gameService";
 import { GameResult, GameStats } from "@/types/games";
 import { ArrowLeft, CoinsIcon, History, Check, X, AlertCircle } from "lucide-react";
@@ -19,16 +20,40 @@ export default function CoinFlip() {
   const [gameHistory, setGameHistory] = useState<GameResult[]>([]);
   const [stats, setStats] = useState<GameStats | null>(null);
   const [showingResult, setShowingResult] = useState(false);
-  
-  const wallet = getWalletStatus();
-  const isConnected = wallet.connected;
+  const [wallet, setWallet] = useState({ connected: false, address: "", balance: 0 });
   
   useEffect(() => {
-    if (isConnected) {
+    const fetchWallet = async () => {
+      try {
+        const walletStatus = await getWalletStatus();
+        setWallet(walletStatus);
+      } catch (error) {
+        console.error("Failed to get wallet status:", error);
+      }
+    };
+    
+    fetchWallet();
+    
+    // Set up wallet listeners for real-time updates
+    if (window.ethereum) {
+      const handleAccountsChanged = () => {
+        fetchWallet();
+      };
+      
+      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      
+      return () => {
+        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
+      };
+    }
+  }, []);
+  
+  useEffect(() => {
+    if (wallet.connected) {
       loadGameHistory();
       loadGameStats();
     }
-  }, [isConnected]);
+  }, [wallet.connected]);
   
   const loadGameHistory = async () => {
     try {
@@ -60,7 +85,7 @@ export default function CoinFlip() {
   };
   
   const handlePlayGame = async () => {
-    if (!isConnected) {
+    if (!wallet.connected) {
       toast.error("Please connect your wallet to play");
       return;
     }
@@ -88,32 +113,43 @@ export default function CoinFlip() {
       setShowingResult(true);
       // Wait for animation to complete before processing result
       setTimeout(async () => {
-        const result = await playGame("coinflip", amount, selectedSide);
-        setGameResult(result);
-        
-        // Refresh history and stats
-        loadGameHistory();
-        loadGameStats();
-        
-        // Show result notification
-        if (result.won) {
-          toast.success(`You won ${result.payout.toFixed(2)} ETH!`);
-        } else {
-          toast.error(`You lost ${amount.toFixed(2)} ETH`);
-        }
-        
-        // Reset form after 3 seconds
-        setTimeout(() => {
+        try {
+          const result = await playGame("coinflip", amount, selectedSide);
+          setGameResult(result);
+          
+          // Refresh history, stats, and wallet balance
+          loadGameHistory();
+          loadGameStats();
+          
+          // Get updated wallet status
+          const walletStatus = await getWalletStatus();
+          setWallet(walletStatus);
+          
+          // Show result notification
+          if (result.won) {
+            toast.success(`You won ${result.payout.toFixed(2)} ETH!`);
+          } else {
+            toast.error(`You lost ${amount.toFixed(2)} ETH`);
+          }
+          
+          // Reset form after 3 seconds
+          setTimeout(() => {
+            setShowingResult(false);
+            setGameResult(null);
+            setBetAmount("");
+            setSelectedSide(null);
+            setIsPlaying(false);
+          }, 3000);
+        } catch (error: any) {
+          console.error("Transaction failed:", error);
+          toast.error(error.message || "Transaction failed. Please try again.");
           setShowingResult(false);
-          setGameResult(null);
-          setBetAmount("");
-          setSelectedSide(null);
           setIsPlaying(false);
-        }, 3000);
+        }
       }, 2000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to play game:", error);
-      toast.error("Failed to play game. Please try again.");
+      toast.error(error.message || "Failed to play game. Please try again.");
       setIsPlaying(false);
       setShowingResult(false);
     }
