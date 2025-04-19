@@ -1,5 +1,5 @@
 
-import { getWalletStatus } from "./arbitrumService";
+import { getWalletStatus, sendTransaction, receiveWinnings } from "./arbitrumService";
 import { GameType, GameResult, GameStats } from "@/types/games";
 
 // Game parameters
@@ -41,7 +41,7 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
   }
 
   // Get wallet status
-  const wallet = await getWalletStatus();
+  const wallet = getWalletStatus();
   if (!wallet.connected) {
     throw new Error("Wallet not connected");
   }
@@ -61,74 +61,76 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
   
   console.log("Game validation passed, proceeding with game");
   
-  // First deduct the bet amount from the wallet
-  // This simulates the transaction confirmation that would happen on the blockchain
-  wallet.balance = wallet.balance - betAmount;
-  
-  // Simulate blockchain transaction
-  // In a real app, this would call the smart contract
-  const transactionPromise = new Promise<void>((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 2000); // Simulate transaction confirmation time
-  });
-  
-  // Wait for transaction to complete
-  await transactionPromise;
-  
-  // Generate random outcome
-  let outcome: number;
-  if (gameType === "coinflip") {
-    outcome = Math.floor(Math.random() * 2); // 0 or 1
-  } else {
-    outcome = Math.floor(Math.random() * 6) + 1; // 1-6
-  }
-  
-  // Determine if player won
-  const won = prediction === outcome;
-  
-  // Calculate payout
-  const multiplier = gameType === "coinflip" ? COIN_FLIP_MULTIPLIER : DICE_MULTIPLIER;
-  const payout = won ? betAmount * multiplier : 0;
-  
-  // Create game result
-  const result: GameResult = {
-    id: Date.now().toString(),
-    player: wallet.address,
-    gameType,
-    stake: betAmount,
-    prediction,
-    outcome,
-    payout,
-    won,
-    timestamp: Date.now()
-  };
-  
-  console.log("Game result:", result);
-  
-  // Add to history
-  gameHistory.unshift(result);
-  
-  // Update stats
-  gameStats.totalGames += 1;
-  gameStats.totalWagered += betAmount;
-  
-  // If won, add winnings to wallet balance
-  if (won) {
-    gameStats.wins += 1;
-    gameStats.totalPayout += payout;
+  try {
+    // Send transaction to blockchain (this will open MetaMask popup)
+    const txHash = await sendTransaction(betAmount);
+    console.log("Transaction confirmed with hash:", txHash);
     
-    // Update wallet balance with winnings
-    wallet.balance += payout;
+    // Simulate blockchain transaction
+    // In a real app, we would wait for the transaction to be confirmed on the blockchain
+    const transactionPromise = new Promise<void>((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, 500); // Shorter delay since we already waited for MetaMask
+    });
+    
+    // Wait for transaction to complete
+    await transactionPromise;
+    
+    // Generate random outcome
+    let outcome: number;
+    if (gameType === "coinflip") {
+      outcome = Math.floor(Math.random() * 2); // 0 or 1
+    } else {
+      outcome = Math.floor(Math.random() * 6) + 1; // 1-6
+    }
+    
+    // Determine if player won
+    const won = prediction === outcome;
+    
+    // Calculate payout
+    const multiplier = gameType === "coinflip" ? COIN_FLIP_MULTIPLIER : DICE_MULTIPLIER;
+    const payout = won ? betAmount * multiplier : 0;
+    
+    // Create game result
+    const result: GameResult = {
+      id: Date.now().toString(),
+      player: wallet.address,
+      gameType,
+      stake: betAmount,
+      prediction,
+      outcome,
+      payout,
+      won,
+      timestamp: Date.now()
+    };
+    
+    console.log("Game result:", result);
+    
+    // Add to history
+    gameHistory.unshift(result);
+    
+    // Update stats
+    gameStats.totalGames += 1;
+    gameStats.totalWagered += betAmount;
+    
+    // If won, add winnings to wallet balance
+    if (won) {
+      gameStats.wins += 1;
+      gameStats.totalPayout += payout;
+      
+      // Receive winnings (in a real app, this would be a separate transaction)
+      await receiveWinnings(payout);
+    }
+    
+    // Calculate win rate
+    gameStats.winRate = (gameStats.wins / gameStats.totalGames) * 100;
+    
+    return result;
+  } catch (error) {
+    console.error("Transaction error:", error);
+    throw new Error("Transaction was rejected or failed. Please try again.");
   }
-  
-  // Calculate win rate
-  gameStats.winRate = (gameStats.wins / gameStats.totalGames) * 100;
-  
-  // In a real app, this would trigger a state update in the wallet
-  // We'll use the walletState from arbitrumService to update the global state
-  
-  return result;
 };
 
 // Get user's game history
