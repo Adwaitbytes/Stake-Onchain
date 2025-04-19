@@ -5,7 +5,8 @@ import {
   playDiceRoll, 
   getUserGameHistory as getBlockchainGameHistory,
   getUserGameStats as getBlockchainGameStats,
-  getWalletStatus
+  getWalletStatus,
+  isMetaMaskInstalled
 } from "./arbitrumService";
 import { toast } from "sonner";
 
@@ -13,8 +14,13 @@ import { toast } from "sonner";
 const checkWalletConnection = async (): Promise<boolean> => {
   const walletStatus = await getWalletStatus();
   if (!walletStatus.connected) {
-    toast.error("Please connect your wallet to play");
-    return false;
+    if (!isMetaMaskInstalled()) {
+      toast.error("MetaMask not detected. Using test mode for demonstration.");
+      return true; // Allow to proceed in test mode
+    } else {
+      toast.error("Please connect your wallet to play");
+      return false;
+    }
   }
   return true;
 };
@@ -52,7 +58,10 @@ export const playGame = async (
 export const getUserGameHistory = async (gameType?: 'coinflip' | 'dice'): Promise<GameResult[]> => {
   try {
     const isConnected = await checkWalletConnection();
-    if (!isConnected) {
+    if (!isConnected && !isMetaMaskInstalled()) {
+      // In test mode, we still return the mock history
+      return await getBlockchainGameHistory(gameType);
+    } else if (!isConnected) {
       return [];
     }
     
@@ -67,7 +76,10 @@ export const getUserGameHistory = async (gameType?: 'coinflip' | 'dice'): Promis
 export const getUserGameStats = async (gameType?: 'coinflip' | 'dice'): Promise<GameStats> => {
   try {
     const isConnected = await checkWalletConnection();
-    if (!isConnected) {
+    if (!isConnected && !isMetaMaskInstalled()) {
+      // In test mode, we still return the mock stats
+      return await getBlockchainGameStats(gameType);
+    } else if (!isConnected) {
       return {
         totalGames: 0,
         totalWagered: 0,

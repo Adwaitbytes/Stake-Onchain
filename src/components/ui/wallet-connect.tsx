@@ -1,8 +1,8 @@
 
 import { useState, useEffect } from "react";
-import { connectWallet, disconnectWallet, getWalletStatus } from "@/services/arbitrumService";
+import { connectWallet, disconnectWallet, getWalletStatus, isMetaMaskInstalled } from "@/services/arbitrumService";
 import { Button } from "@/components/ui/button";
-import { Wallet } from "lucide-react";
+import { Wallet, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface WalletConnectProps {
@@ -14,18 +14,30 @@ export function WalletConnect({ className }: WalletConnectProps) {
     connected: false,
     address: "",
     balance: 0,
-    isConnecting: false
+    isConnecting: false,
+    testMode: false
   });
 
   useEffect(() => {
     const checkWalletStatus = async () => {
       try {
+        // Check if MetaMask is installed
+        const metaMaskInstalled = isMetaMaskInstalled();
+        
+        if (!metaMaskInstalled) {
+          setWalletState(prev => ({
+            ...prev,
+            testMode: true
+          }));
+        }
+        
         const status = await getWalletStatus();
         setWalletState(prev => ({
           ...prev,
           connected: status.connected,
           address: status.address,
-          balance: status.balance
+          balance: status.balance,
+          testMode: !metaMaskInstalled && status.connected
         }));
       } catch (error) {
         console.error("Failed to get wallet status:", error);
@@ -64,14 +76,25 @@ export function WalletConnect({ className }: WalletConnectProps) {
   const handleConnect = async () => {
     setWalletState(prev => ({ ...prev, isConnecting: true }));
     try {
+      if (!isMetaMaskInstalled()) {
+        // If MetaMask is not installed, use test mode
+        toast.success("Test mode activated for demonstration", {
+          description: "Install MetaMask for full functionality"
+        });
+      }
+      
       const { address, balance } = await connectWallet();
       setWalletState({
         connected: true,
         address,
         balance,
-        isConnecting: false
+        isConnecting: false,
+        testMode: !isMetaMaskInstalled() 
       });
-      toast.success("Wallet connected successfully");
+      
+      if (isMetaMaskInstalled()) {
+        toast.success("Wallet connected successfully");
+      }
     } catch (error) {
       console.error("Failed to connect wallet:", error);
       toast.error("Failed to connect wallet. Please make sure MetaMask is installed and unlocked.");
@@ -86,7 +109,8 @@ export function WalletConnect({ className }: WalletConnectProps) {
         connected: false,
         address: "",
         balance: 0,
-        isConnecting: false
+        isConnecting: false,
+        testMode: false
       });
       toast.success("Wallet disconnected");
     } catch (error) {
@@ -103,6 +127,12 @@ export function WalletConnect({ className }: WalletConnectProps) {
     <div className={className}>
       {walletState.connected ? (
         <div className="flex items-center gap-4">
+          {walletState.testMode && (
+            <div className="items-center hidden md:flex">
+              <AlertCircle className="h-4 w-4 text-yellow-500 mr-1" />
+              <span className="text-xs text-yellow-500">Test Mode</span>
+            </div>
+          )}
           <div className="hidden md:block">
             <div className="text-sm text-gray-400">
               Balance: <span className="font-medium text-neural-light">{walletState.balance.toFixed(2)} ETH</span>

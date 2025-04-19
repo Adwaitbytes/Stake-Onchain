@@ -1,6 +1,7 @@
 
 import { ethers } from "ethers";
 import { GameResult, GameStats } from "@/types/games";
+import { toast } from "sonner";
 
 // Constants
 export const ARBITRUM_CHAIN_ID = 42161; // Mainnet
@@ -22,11 +23,33 @@ let provider: ethers.BrowserProvider | null = null;
 let signer: ethers.Signer | null = null;
 let gameContract: ethers.Contract | null = null;
 
+// Mock data for testing without MetaMask
+const MOCK_ADDRESS = "0x1234567890123456789012345678901234567890";
+const MOCK_BALANCE = 5.0; // ETH
+let useMockData = false;
+
+// Check if we're in a development environment
+const isDevelopment = process.env.NODE_ENV === 'development' || 
+                     window.location.hostname === 'localhost' ||
+                     window.location.hostname.includes('lovableproject.com');
+
+// Check if MetaMask is installed
+const isMetaMaskInstalled = () => {
+  return typeof window !== 'undefined' && 
+         typeof window.ethereum !== 'undefined' && 
+         window.ethereum.isMetaMask;
+};
+
 // Initialize blockchain connection
 export const initBlockchain = async (): Promise<boolean> => {
   try {
     // Check if ethereum object exists (MetaMask, etc.)
-    if (!window.ethereum) {
+    if (!isMetaMaskInstalled()) {
+      if (isDevelopment) {
+        console.warn("MetaMask not detected, using mock data for development");
+        useMockData = true;
+        return true;
+      }
       throw new Error("MetaMask not installed. Please install MetaMask to use this application.");
     }
     
@@ -59,13 +82,23 @@ export const initBlockchain = async (): Promise<boolean> => {
 // Connect wallet
 export const connectWallet = async (): Promise<{ address: string; balance: number }> => {
   try {
-    if (!window.ethereum) {
+    // Use mock data for development without MetaMask
+    if (!isMetaMaskInstalled()) {
+      if (isDevelopment) {
+        console.warn("MetaMask not detected, using mock data for development");
+        useMockData = true;
+        return { address: MOCK_ADDRESS, balance: MOCK_BALANCE };
+      }
       throw new Error("MetaMask not installed. Please install MetaMask to use this application.");
     }
     
     const initialized = await initBlockchain();
-    if (!initialized) {
+    if (!initialized && !useMockData) {
       throw new Error("Failed to initialize blockchain connection");
+    }
+    
+    if (useMockData) {
+      return { address: MOCK_ADDRESS, balance: MOCK_BALANCE };
     }
     
     if (!signer) {
@@ -94,12 +127,41 @@ export const disconnectWallet = async (): Promise<void> => {
   provider = null;
   signer = null;
   gameContract = null;
+  useMockData = false;
 };
 
 // Get wallet status
 export const getWalletStatus = async (): Promise<{ connected: boolean; address: string; balance: number }> => {
   try {
+    // Use mock data for development without MetaMask
+    if (useMockData) {
+      return { connected: true, address: MOCK_ADDRESS, balance: MOCK_BALANCE };
+    }
+    
+    if (!isMetaMaskInstalled() && isDevelopment) {
+      useMockData = true;
+      return { connected: true, address: MOCK_ADDRESS, balance: MOCK_BALANCE };
+    }
+    
     if (!provider || !signer) {
+      if (isMetaMaskInstalled()) {
+        try {
+          // Try to silently connect if MetaMask is unlocked
+          provider = new ethers.BrowserProvider(window.ethereum);
+          const accounts = await provider.listAccounts();
+          
+          if (accounts.length > 0) {
+            signer = await provider.getSigner();
+            const address = await signer.getAddress();
+            const balanceWei = await provider.getBalance(address);
+            const balance = parseFloat(ethers.formatEther(balanceWei));
+            
+            return { connected: true, address, balance };
+          }
+        } catch (e) {
+          console.log("Silent connection failed:", e);
+        }
+      }
       return { connected: false, address: "", balance: 0 };
     }
     
@@ -117,6 +179,8 @@ export const getWalletStatus = async (): Promise<{ connected: boolean; address: 
 // Switch to Arbitrum network
 export const switchToArbitrum = async (): Promise<boolean> => {
   try {
+    if (useMockData) return true;
+    
     if (!window.ethereum) return false;
     
     try {
@@ -161,6 +225,31 @@ export const playCoinFlip = async (
   prediction: "heads" | "tails"
 ): Promise<GameResult> => {
   try {
+    if (useMockData) {
+      // Mock gameplay for development
+      const won = Math.random() > 0.5;
+      const outcome = won ? prediction : (prediction === "heads" ? "tails" : "heads");
+      const payout = won ? stake * 1.95 : 0;
+      
+      const result: GameResult = {
+        id: Date.now().toString(),
+        gameType: "coinflip",
+        playerAddress: MOCK_ADDRESS,
+        stake,
+        payout,
+        outcome,
+        playerChoice: prediction,
+        won,
+        timestamp: Date.now(),
+        txHash: "0x" + Math.random().toString(16).substr(2, 64)
+      };
+      
+      // Store in local storage for history tracking
+      storeGameResult(result);
+      
+      return result;
+    }
+    
     if (!gameContract || !signer) {
       throw new Error("Wallet not connected");
     }
@@ -211,6 +300,31 @@ export const playDiceRoll = async (
   prediction: string
 ): Promise<GameResult> => {
   try {
+    if (useMockData) {
+      // Mock gameplay for development
+      const outcome = (Math.floor(Math.random() * 6) + 1).toString();
+      const won = outcome === prediction;
+      const payout = won ? stake * 5.8 : 0;
+      
+      const result: GameResult = {
+        id: Date.now().toString(),
+        gameType: "dice",
+        playerAddress: MOCK_ADDRESS,
+        stake,
+        payout,
+        outcome,
+        playerChoice: prediction,
+        won,
+        timestamp: Date.now(),
+        txHash: "0x" + Math.random().toString(16).substr(2, 64)
+      };
+      
+      // Store in local storage for history tracking
+      storeGameResult(result);
+      
+      return result;
+    }
+    
     if (!gameContract || !signer) {
       throw new Error("Wallet not connected");
     }
@@ -268,6 +382,18 @@ const storeGameResult = (result: GameResult): void => {
 // Get player's game history
 export const getUserGameHistory = async (gameType?: 'coinflip' | 'dice'): Promise<GameResult[]> => {
   try {
+    if (useMockData) {
+      // Return the stored game results for mock data
+      const GAME_RESULTS_KEY = 'aipredict_game_results';
+      const results: GameResult[] = JSON.parse(localStorage.getItem(GAME_RESULTS_KEY) || '[]');
+      
+      return results
+        .filter(result => 
+          (gameType ? result.gameType === gameType : true)
+        )
+        .sort((a, b) => b.timestamp - a.timestamp);
+    }
+    
     if (!signer) {
       return [];
     }
@@ -294,6 +420,33 @@ export const getUserGameHistory = async (gameType?: 'coinflip' | 'dice'): Promis
 // Get player's game stats
 export const getUserGameStats = async (gameType?: 'coinflip' | 'dice'): Promise<GameStats> => {
   try {
+    if (useMockData) {
+      // Calculate stats from mock data
+      const history = await getUserGameHistory(gameType);
+      
+      if (history.length === 0) {
+        return {
+          totalGames: 0,
+          totalWagered: 0,
+          totalPayout: 0,
+          winRate: 0
+        };
+      }
+      
+      const totalGames = history.length;
+      const totalWagered = history.reduce((sum, game) => sum + game.stake, 0);
+      const totalPayout = history.reduce((sum, game) => sum + game.payout, 0);
+      const wins = history.filter(game => game.won).length;
+      const winRate = (wins / totalGames) * 100;
+      
+      return {
+        totalGames,
+        totalWagered,
+        totalPayout,
+        winRate
+      };
+    }
+    
     if (!gameContract || !signer) {
       return {
         totalGames: 0,
