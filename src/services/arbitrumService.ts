@@ -26,50 +26,57 @@ let gameContract: ethers.Contract | null = null;
 export const initBlockchain = async (): Promise<boolean> => {
   try {
     // Check if ethereum object exists (MetaMask, etc.)
-    if (window.ethereum) {
-      // Create provider
-      provider = new ethers.BrowserProvider(window.ethereum);
+    if (!window.ethereum) {
+      throw new Error("MetaMask not installed. Please install MetaMask to use this application.");
+    }
+    
+    // Create provider
+    provider = new ethers.BrowserProvider(window.ethereum);
+    
+    // Request account access
+    const accounts = await provider.send("eth_requestAccounts", []);
+    
+    if (accounts.length > 0) {
+      // Get signer
+      signer = await provider.getSigner();
       
-      // Request account access
-      const accounts = await provider.send("eth_requestAccounts", []);
+      // Initialize game contract
+      gameContract = new ethers.Contract(
+        GAME_CONTRACT_ADDRESS,
+        GAME_CONTRACT_ABI,
+        signer
+      );
       
-      if (accounts.length > 0) {
-        // Get signer
-        signer = await provider.getSigner();
-        
-        // Initialize game contract
-        gameContract = new ethers.Contract(
-          GAME_CONTRACT_ADDRESS,
-          GAME_CONTRACT_ABI,
-          signer
-        );
-        
-        return true;
-      }
+      return true;
     }
     return false;
   } catch (error) {
     console.error("Failed to initialize blockchain:", error);
-    return false;
+    throw error;
   }
 };
 
 // Connect wallet
 export const connectWallet = async (): Promise<{ address: string; balance: number }> => {
   try {
-    if (!provider) {
-      const initialized = await initBlockchain();
-      if (!initialized) {
-        throw new Error("Failed to initialize blockchain");
-      }
+    if (!window.ethereum) {
+      throw new Error("MetaMask not installed. Please install MetaMask to use this application.");
+    }
+    
+    const initialized = await initBlockchain();
+    if (!initialized) {
+      throw new Error("Failed to initialize blockchain connection");
     }
     
     if (!signer) {
-      signer = await provider!.getSigner();
+      if (!provider) {
+        provider = new ethers.BrowserProvider(window.ethereum);
+      }
+      signer = await provider.getSigner();
     }
     
     const address = await signer.getAddress();
-    const balanceWei = await provider!.getBalance(address);
+    const balanceWei = await provider.getBalance(address);
     const balance = parseFloat(ethers.formatEther(balanceWei));
     
     // Switch to Arbitrum if not already on it
