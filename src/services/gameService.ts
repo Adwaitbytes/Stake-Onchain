@@ -63,6 +63,7 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
   
   try {
     // Send transaction to blockchain (this will open MetaMask popup)
+    // Sending from user wallet (0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C) to gaming contract (0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32)
     const txHash = await sendTransaction(betAmount);
     console.log("Transaction confirmed with hash:", txHash);
     
@@ -120,7 +121,7 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
       gameStats.totalPayout += payout;
       
       // Explicitly receive winnings - this is where we send money back to the user
-      console.log(`Player won ${payout} ETH, sending to wallet...`);
+      console.log(`Player won ${payout} ETH, sending from gaming contract (0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32) to user wallet (0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C)...`);
       await receiveWinnings(payout);
     }
     

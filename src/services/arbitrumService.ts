@@ -21,7 +21,7 @@ export const initBlockchain = async () => {
   if (process.env.NODE_ENV === 'development') {
     walletState = {
       connected: true,
-      address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      address: "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C", // Main user account
       balance: 10.0 // 10 ETH for testing
     };
   }
@@ -67,7 +67,7 @@ export const connectWallet = async () => {
     if (process.env.NODE_ENV === 'development') {
       walletState = {
         connected: true,
-        address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+        address: "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C", // Main user account
         balance: 10.0 // 10 ETH for testing
       };
       return walletState;
@@ -86,7 +86,7 @@ export const getWalletStatus = () => {
   if (process.env.NODE_ENV === 'development' && !walletState.connected) {
     walletState = {
       connected: true,
-      address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+      address: "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C", // Main user account
       balance: 10.0 // 10 ETH for testing
     };
   }
@@ -131,7 +131,7 @@ export const sendTransaction = async (amount: number): Promise<string> => {
     // For test mode, just simulate the transaction
     if (process.env.NODE_ENV === 'development' && !isMetaMaskInstalled()) {
       // Simulate transaction in test mode
-      console.log("Test mode: Simulating transaction of", amount, "ETH");
+      console.log("Test mode: Simulating transaction of", amount, "ETH to 0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32");
       
       // Update balance
       walletState.balance -= amount;
@@ -143,7 +143,7 @@ export const sendTransaction = async (amount: number): Promise<string> => {
     // Prepare the transaction parameters
     const transactionParameters = {
       from: accounts[0],
-      to: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e", // Demo contract address
+      to: "0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32", // Demo contract address
       value: amountInWei,
       // gas: '0x5208', // Optional: specify gas limit
       // gasPrice: '0x9184e72a000', // Optional: specify gas price
@@ -169,6 +169,7 @@ export const sendTransaction = async (amount: number): Promise<string> => {
     // For demo mode, allow transaction to "succeed" even if MetaMask is not present
     if (process.env.NODE_ENV === 'development') {
       console.log("Development mode: Simulating successful transaction despite error");
+      console.log(`Transferring ${amount} ETH from 0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C to 0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32`);
       
       // Update balance
       walletState.balance -= amount;
@@ -183,9 +184,15 @@ export const sendTransaction = async (amount: number): Promise<string> => {
 
 // Add winnings to wallet (simulates receiving funds from the contract)
 export const receiveWinnings = async (amount: number): Promise<void> => {
+  // Simulate receiving funds from the gaming contract address
+  console.log(`Receiving ${amount} ETH from 0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32 to 0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C`);
+  
   // In a real implementation, this would verify the transaction on the blockchain
   // For this demo, we just update the wallet balance
   walletState.balance += amount;
+  
+  // Set the main account as the recipient
+  walletState.address = "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C";
   
   // In a real implementation, for significant payouts, there would be a MetaMask transaction 
   // from the contract to the user's wallet here
