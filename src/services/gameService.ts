@@ -114,12 +114,13 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
     gameStats.totalGames += 1;
     gameStats.totalWagered += betAmount;
     
-    // If won, add winnings to wallet balance
+    // If won, add winnings to wallet balance and trigger payout
     if (won) {
       gameStats.wins += 1;
       gameStats.totalPayout += payout;
       
-      // Receive winnings (in a real app, this would be a separate transaction)
+      // Explicitly receive winnings - this is where we send money back to the user
+      console.log(`Player won ${payout} ETH, sending to wallet...`);
       await receiveWinnings(payout);
     }
     

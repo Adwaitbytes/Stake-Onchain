@@ -1,3 +1,4 @@
+
 // This service handles interactions with the Arbitrum Stylus blockchain
 
 // Mock wallet state
@@ -186,7 +187,24 @@ export const receiveWinnings = async (amount: number): Promise<void> => {
   // For this demo, we just update the wallet balance
   walletState.balance += amount;
   
+  // In a real implementation, for significant payouts, there would be a MetaMask transaction 
+  // from the contract to the user's wallet here
+  
   console.log(`Added ${amount} ETH to wallet. New balance: ${walletState.balance}`);
+  
+  // If MetaMask is installed, we'd also want to refresh the balance from the network
+  if (window.ethereum && walletState.connected) {
+    try {
+      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+      if (accounts.length > 0) {
+        // This would update the balance display from the actual network in a real implementation
+        // For now, we're just using our local state
+      }
+    } catch (error) {
+      console.error("Failed to refresh balance from network:", error);
+    }
+  }
+  
   return Promise.resolve();
 };
 
