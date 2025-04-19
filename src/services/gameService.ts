@@ -25,6 +25,11 @@ const DICE_MULTIPLIER = 5.7;       // 5.7x payout for dice roll (6x minus house 
 const MIN_BET = 0.001;             // Minimum bet amount
 const MAX_BET = 5;                 // Maximum bet amount
 
+// Game contract address
+const GAME_CONTRACT_ADDRESS = "0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32";
+// User wallet address
+const USER_WALLET_ADDRESS = "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C";
+
 // Play a game
 export const playGame = async (params: GameParams): Promise<GameResult> => {
   const { gameType, betAmount, prediction } = params;
@@ -63,16 +68,18 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
   
   try {
     // Send transaction to blockchain (this will open MetaMask popup)
-    // Sending from user wallet (0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C) to gaming contract (0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32)
+    console.log(`Sending ${betAmount} ETH from ${USER_WALLET_ADDRESS} to game contract ${GAME_CONTRACT_ADDRESS}`);
+    
+    // This will trigger the MetaMask popup for transaction approval
     const txHash = await sendTransaction(betAmount);
     console.log("Transaction confirmed with hash:", txHash);
     
-    // Simulate blockchain transaction
-    // In a real app, we would wait for the transaction to be confirmed on the blockchain
+    // In a real blockchain app, we would wait for the transaction confirmation
+    // Here we're simulating a short delay to represent blockchain confirmation time
     const transactionPromise = new Promise<void>((resolve) => {
       setTimeout(() => {
         resolve();
-      }, 500); // Shorter delay since we already waited for MetaMask
+      }, 500);
     });
     
     // Wait for transaction to complete
@@ -120,8 +127,11 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
       gameStats.wins += 1;
       gameStats.totalPayout += payout;
       
-      // Explicitly receive winnings - this is where we send money back to the user
-      console.log(`Player won ${payout} ETH, sending from gaming contract (0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32) to user wallet (0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C)...`);
+      // Explicitly receive winnings - this simulates the smart contract sending funds back
+      console.log(`Player won ${payout} ETH, sending from game contract ${GAME_CONTRACT_ADDRESS} to user wallet ${USER_WALLET_ADDRESS}...`);
+      
+      // In a real blockchain application, this would be handled by the smart contract
+      // automatically based on the game outcome. Here we're simulating that process.
       await receiveWinnings(payout);
     }
     

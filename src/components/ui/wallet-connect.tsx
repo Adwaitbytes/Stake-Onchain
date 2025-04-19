@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { connectWallet, disconnectWallet, getWalletStatus, isMetaMaskInstalled } from "@/services/arbitrumService";
 import { Button } from "@/components/ui/button";
-import { Wallet, AlertCircle } from "lucide-react";
+import { Wallet, AlertCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 interface WalletConnectProps {
@@ -29,6 +29,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
             ...prev,
             testMode: true
           }));
+          console.log("MetaMask not detected, using test mode");
         }
         
         const status = getWalletStatus();
@@ -85,10 +86,25 @@ export function WalletConnect({ className }: WalletConnectProps) {
   const handleConnect = async () => {
     setWalletState(prev => ({ ...prev, isConnecting: true }));
     try {
-      if (!isMetaMaskInstalled()) {
-        // If MetaMask is not installed, use test mode
-        toast.success("Test mode activated for demonstration", {
-          description: "Install MetaMask for full functionality"
+      const metaMaskInstalled = isMetaMaskInstalled();
+      
+      if (!metaMaskInstalled) {
+        // If MetaMask is not installed, use test mode or prompt to install
+        toast.info("MetaMask not detected", {
+          description: (
+            <div className="flex flex-col gap-2">
+              <div>Using test mode for demonstration</div>
+              <a 
+                href="https://metamask.io/download/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center text-neural-accent hover:underline"
+              >
+                Install MetaMask <ExternalLink className="h-3 w-3 ml-1" />
+              </a>
+            </div>
+          ),
+          duration: 5000
         });
       }
       
@@ -98,10 +114,10 @@ export function WalletConnect({ className }: WalletConnectProps) {
         address,
         balance,
         isConnecting: false,
-        testMode: !isMetaMaskInstalled() 
+        testMode: !metaMaskInstalled 
       });
       
-      if (isMetaMaskInstalled()) {
+      if (metaMaskInstalled) {
         toast.success("Wallet connected successfully");
       }
     } catch (error) {

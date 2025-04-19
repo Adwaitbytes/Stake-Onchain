@@ -10,7 +10,7 @@ let walletState = {
 
 // Check if MetaMask is installed
 export const isMetaMaskInstalled = (): boolean => {
-  return window.ethereum !== undefined;
+  return typeof window !== "undefined" && window.ethereum !== undefined;
 };
 
 // Initialize blockchain connection
@@ -33,7 +33,7 @@ export const initBlockchain = async () => {
 export const connectWallet = async () => {
   try {
     // Check if MetaMask is installed
-    if (!window.ethereum) {
+    if (typeof window !== "undefined" && !window.ethereum) {
       throw new Error("MetaMask not installed. Please install MetaMask to use this application.");
     }
     
@@ -113,40 +113,42 @@ export const updateWalletBalance = (newBalance: number) => {
 
 // Simulate a blockchain transaction with MetaMask
 export const sendTransaction = async (amount: number): Promise<string> => {
+  const gameContractAddress = "0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32";
+  
   // Check if MetaMask is installed
-  if (!window.ethereum) {
-    throw new Error("MetaMask not installed");
+  if (typeof window !== "undefined" && !window.ethereum) {
+    console.log("MetaMask not detected, using test mode");
+    
+    // Simulate transaction in test mode
+    console.log(`Test mode: Simulating transaction of ${amount} ETH to ${gameContractAddress}`);
+    
+    // Update balance
+    walletState.balance -= amount;
+    
+    // Return a fake transaction hash
+    return `0x${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
   }
   
   try {
     // Get current account
     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
     if (accounts.length === 0) {
-      throw new Error("No accounts connected. Please connect your wallet first.");
+      // Try to request accounts if none are connected
+      const requestedAccounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      if (requestedAccounts.length === 0) {
+        throw new Error("No accounts connected. Please connect your wallet first.");
+      }
     }
     
     // Convert amount from ETH to Wei (ETH * 10^18)
-    const amountInWei = `0x${(amount * 1e18).toString(16)}`;
-    
-    // For test mode, just simulate the transaction
-    if (process.env.NODE_ENV === 'development' && !isMetaMaskInstalled()) {
-      // Simulate transaction in test mode
-      console.log("Test mode: Simulating transaction of", amount, "ETH to 0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32");
-      
-      // Update balance
-      walletState.balance -= amount;
-      
-      // Return a fake transaction hash
-      return `0x${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
-    }
+    const amountInWei = `0x${Math.floor(amount * 1e18).toString(16)}`;
     
     // Prepare the transaction parameters
     const transactionParameters = {
       from: accounts[0],
-      to: "0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32", // Demo contract address
+      to: gameContractAddress, // Gaming contract address
       value: amountInWei,
-      // gas: '0x5208', // Optional: specify gas limit
-      // gasPrice: '0x9184e72a000', // Optional: specify gas price
+      gas: '0x5208', // 21000 gas (standard transaction)
     };
     
     console.log("Requesting transaction approval from MetaMask", transactionParameters);
@@ -184,33 +186,33 @@ export const sendTransaction = async (amount: number): Promise<string> => {
 
 // Add winnings to wallet (simulates receiving funds from the contract)
 export const receiveWinnings = async (amount: number): Promise<void> => {
-  // Simulate receiving funds from the gaming contract address
-  console.log(`Receiving ${amount} ETH from 0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32 to 0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C`);
+  const userWalletAddress = "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C";
+  const gameContractAddress = "0xa4FA024Fac779dBc7B99F146De68bFf4a8c7bb32";
   
-  // In a real implementation, this would verify the transaction on the blockchain
-  // For this demo, we just update the wallet balance
-  walletState.balance += amount;
+  // Simulate receiving funds from the gaming contract address
+  console.log(`Receiving ${amount} ETH from ${gameContractAddress} to ${userWalletAddress}`);
+  
+  // In a real implementation with MetaMask, we would create a transaction here
+  if (typeof window !== "undefined" && window.ethereum && isMetaMaskInstalled()) {
+    try {
+      // This is a simulated transaction that would represent the contract
+      // paying out to the user. In a real implementation, this would be
+      // triggered by a smart contract's internal logic.
+      
+      // For testing purposes, we'll just update the balance
+      walletState.balance += amount;
+      console.log(`Added ${amount} ETH to wallet. New balance: ${walletState.balance}`);
+    } catch (error) {
+      console.error("Failed to simulate receiving winnings:", error);
+    }
+  } else {
+    // In test mode or if MetaMask is not available
+    walletState.balance += amount;
+    console.log(`Added ${amount} ETH to wallet. New balance: ${walletState.balance}`);
+  }
   
   // Set the main account as the recipient
-  walletState.address = "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C";
-  
-  // In a real implementation, for significant payouts, there would be a MetaMask transaction 
-  // from the contract to the user's wallet here
-  
-  console.log(`Added ${amount} ETH to wallet. New balance: ${walletState.balance}`);
-  
-  // If MetaMask is installed, we'd also want to refresh the balance from the network
-  if (window.ethereum && walletState.connected) {
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-      if (accounts.length > 0) {
-        // This would update the balance display from the actual network in a real implementation
-        // For now, we're just using our local state
-      }
-    } catch (error) {
-      console.error("Failed to refresh balance from network:", error);
-    }
-  }
+  walletState.address = userWalletAddress;
   
   return Promise.resolve();
 };
