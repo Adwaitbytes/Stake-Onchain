@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +8,9 @@ import Home from "./pages/Home";
 import Markets from "./pages/Markets";
 import CreateMarket from "./pages/CreateMarket";
 import MarketDetail from "./pages/MarketDetail";
+import Games from "./pages/Games";
+import CoinFlip from "./pages/games/CoinFlip";
+import Dice from "./pages/games/Dice";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -22,6 +26,9 @@ const App = () => (
           <Route path="/markets" element={<Markets />} />
           <Route path="/create" element={<CreateMarket />} />
           <Route path="/market/:id" element={<MarketDetail />} />
+          <Route path="/games" element={<Games />} />
+          <Route path="/games/coin-flip" element={<CoinFlip />} />
+          <Route path="/games/dice" element={<Dice />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

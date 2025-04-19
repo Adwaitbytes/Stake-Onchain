@@ -6,7 +6,7 @@ import { Navbar } from "@/components/layout/navbar";
 import { MarketCard } from "@/components/markets/market-card";
 import { getMarkets } from "@/services/mockBlockchainService";
 import { Market } from "@/types/market";
-import { BarChart, Clock, TrendingUp } from "lucide-react";
+import { BarChart, Clock, TrendingUp, Dices } from "lucide-react";
 
 export default function Home() {
   const [featuredMarkets, setFeaturedMarkets] = useState<Market[]>([]);
@@ -66,9 +66,10 @@ export default function Home() {
                   </Button>
                 </Link>
                 
-                <Link to="/create">
+                <Link to="/games">
                   <Button size="lg" variant="outline" className="neural-glow">
-                    Create a Market
+                    <Dices className="mr-2 h-5 w-5" />
+                    Play Games
                   </Button>
                 </Link>
               </div>
@@ -104,12 +105,34 @@ export default function Home() {
               
               <div className="glass-card rounded-xl p-6 text-center">
                 <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-neural-accent/20 flex items-center justify-center">
-                  <BarChart className="h-6 w-6 text-neural-light" />
+                  <Dices className="h-6 w-6 text-neural-light" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">AI Predictions</h3>
+                <h3 className="text-xl font-semibold mb-3">Provably Fair Games</h3>
                 <p className="text-muted-foreground">
-                  Every market includes AI-generated probability estimates to inform your bets.
+                  All games use transparent, verifiable blockchain randomness for provable fairness.
                 </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* What's New section */}
+        <section className="py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">What's New</h2>
+            
+            <div className="glass-card rounded-xl p-8 mb-12">
+              <div className="max-w-3xl mx-auto text-center">
+                <Dices className="h-12 w-12 mx-auto mb-6 text-neural-light" />
+                <h3 className="text-2xl font-bold mb-4">New Staking Games</h3>
+                <p className="text-lg mb-6">
+                  We've added exciting new staking games to AIPredict! Try your luck with Coin Flip and Dice Roll, both offering provably fair gameplay with blockchain transparency.
+                </p>
+                <Link to="/games">
+                  <Button size="lg" className="bg-neural-accent hover:bg-neural-accent/90">
+                    Play Now
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>

@@ -2,7 +2,7 @@
 import { Link } from "react-router-dom";
 import { WalletConnect } from "@/components/ui/wallet-connect";
 import { Button } from "@/components/ui/button";
-import { Plus, BarChart, Home } from "lucide-react";
+import { Plus, BarChart, Home, Dices } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -26,6 +26,12 @@ export function Navbar() {
               <Button variant="ghost" className="text-sm">
                 <BarChart className="h-4 w-4 mr-2" />
                 Explore
+              </Button>
+            </Link>
+            <Link to="/games">
+              <Button variant="ghost" className="text-sm">
+                <Dices className="h-4 w-4 mr-2" />
+                Games
               </Button>
             </Link>
             <Link to="/create">
@@ -52,6 +58,10 @@ export function Navbar() {
           <Link to="/markets" className="flex flex-col items-center py-1 px-3 text-muted-foreground hover:text-foreground transition-colors">
             <BarChart className="h-5 w-5" />
             <span className="text-xs mt-1">Explore</span>
+          </Link>
+          <Link to="/games" className="flex flex-col items-center py-1 px-3 text-muted-foreground hover:text-foreground transition-colors">
+            <Dices className="h-5 w-5" />
+            <span className="text-xs mt-1">Games</span>
           </Link>
           <Link to="/create" className="flex flex-col items-center py-1 px-3 text-muted-foreground hover:text-foreground transition-colors">
             <Plus className="h-5 w-5" />
