@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
@@ -34,7 +33,6 @@ export default function CoinFlip() {
     
     fetchWallet();
     
-    // Set up wallet listeners for real-time updates
     if (window.ethereum) {
       const handleAccountsChanged = () => {
         fetchWallet();
@@ -75,7 +73,7 @@ export default function CoinFlip() {
   
   const handleBetAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    if (/^\d*\.?\d*$/.test(value)) { // Only allow numbers and a decimal point
+    if (/^\d*\.?\d*$/.test(value)) {
       setBetAmount(value);
     }
   };
@@ -109,30 +107,24 @@ export default function CoinFlip() {
     setIsPlaying(true);
     
     try {
-      // Flip animation before showing result
       setShowingResult(true);
-      // Wait for animation to complete before processing result
       setTimeout(async () => {
         try {
           const result = await playGame("coinflip", amount, selectedSide);
           setGameResult(result);
           
-          // Refresh history, stats, and wallet balance
           loadGameHistory();
           loadGameStats();
           
-          // Get updated wallet status
           const walletStatus = await getWalletStatus();
           setWallet(walletStatus);
           
-          // Show result notification
           if (result.won) {
             toast.success(`You won ${result.payout.toFixed(2)} ETH!`);
           } else {
             toast.error(`You lost ${amount.toFixed(2)} ETH`);
           }
           
-          // Reset form after 3 seconds
           setTimeout(() => {
             setShowingResult(false);
             setGameResult(null);
@@ -170,11 +162,9 @@ export default function CoinFlip() {
           <p className="text-muted-foreground mb-8">Flip a coin and double your stake with 1.95x payout</p>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Game section */}
             <div className="md:col-span-2 space-y-6">
               <div className="glass-card rounded-xl p-6">
                 {showingResult ? (
-                  // Result display
                   <div className="text-center py-8">
                     <div className={`text-5xl mb-6 mx-auto rounded-full w-24 h-24 flex items-center justify-center ${
                       gameResult?.won ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'
@@ -200,7 +190,6 @@ export default function CoinFlip() {
                     )}
                   </div>
                 ) : (
-                  // Game interface
                   <div>
                     <div className="flex justify-center mb-6">
                       <CoinsIcon className="h-20 w-20 text-yellow-400" />
@@ -249,7 +238,7 @@ export default function CoinFlip() {
                             variant="outline" 
                             className="rounded-l-none"
                             onClick={() => setBetAmount(wallet.balance.toString())}
-                            disabled={isPlaying || !isConnected}
+                            disabled={isPlaying || !wallet.connected}
                           >
                             Max
                           </Button>
@@ -268,7 +257,7 @@ export default function CoinFlip() {
                         onClick={handlePlayGame}
                         disabled={
                           isPlaying ||
-                          !isConnected ||
+                          !wallet.connected ||
                           !selectedSide ||
                           !betAmount ||
                           parseFloat(betAmount) <= 0 ||
@@ -282,7 +271,6 @@ export default function CoinFlip() {
                 )}
               </div>
               
-              {/* Recent games */}
               {gameHistory.length > 0 && (
                 <div className="glass-card rounded-xl p-6">
                   <div className="flex items-center mb-4">
@@ -322,9 +310,8 @@ export default function CoinFlip() {
               )}
             </div>
             
-            {/* Info section */}
             <div className="space-y-6">
-              {isConnected ? (
+              {wallet.connected ? (
                 <div className="glass-card rounded-xl p-6">
                   <h2 className="text-xl font-semibold mb-4">Your Stats</h2>
                   
