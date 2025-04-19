@@ -33,57 +33,47 @@ export const initBlockchain = async () => {
 export const connectWallet = async () => {
   try {
     // Check if MetaMask is installed
-    if (typeof window !== "undefined" && window.ethereum) {
-      console.log("MetaMask detected, attempting to connect...");
-      // Request accounts
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      
-      if (accounts.length === 0) {
-        throw new Error("No accounts found. Please unlock your MetaMask wallet.");
-      }
-      
-      // Get balance
-      const balance = await window.ethereum.request({
-        method: 'eth_getBalance',
-        params: [accounts[0], 'latest']
-      });
-      
-      // Convert from wei to ETH
-      const balanceInEth = parseInt(balance, 16) / 1e18;
-      
-      walletState = {
-        connected: true,
-        address: accounts[0],
-        balance: balanceInEth
-      };
-      
-      console.log("Wallet connected successfully:", walletState);
-      return walletState;
-    } else {
-      console.log("MetaMask not detected, using test mode");
-      
-      // For demo purposes, set a mock wallet in development
+    if (typeof window !== "undefined" && !window.ethereum) {
+      throw new Error("MetaMask not installed. Please install MetaMask to use this application.");
+    }
+    
+    // Request accounts
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    
+    if (accounts.length === 0) {
+      throw new Error("No accounts found. Please unlock your MetaMask wallet.");
+    }
+    
+    // Get balance
+    const balance = await window.ethereum.request({
+      method: 'eth_getBalance',
+      params: [accounts[0], 'latest']
+    });
+    
+    // Convert from wei to ETH
+    const balanceInEth = parseInt(balance, 16) / 1e18;
+    
+    walletState = {
+      connected: true,
+      address: accounts[0],
+      balance: balanceInEth
+    };
+    
+    return walletState;
+  } catch (error) {
+    console.error("Failed to connect wallet:", error);
+    
+    // For demo purposes, set a mock wallet in development
+    if (process.env.NODE_ENV === 'development') {
       walletState = {
         connected: true,
         address: "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C", // Main user account
         balance: 10.0 // 10 ETH for testing
       };
-      
-      console.log("Test wallet connected:", walletState);
       return walletState;
     }
-  } catch (error) {
-    console.error("Failed to connect wallet:", error);
     
-    // For demo purposes, set a mock wallet in development
-    walletState = {
-      connected: true,
-      address: "0x3EfFFd7caCbFdD00F05A370Ed57A8977d1c7070C", // Main user account
-      balance: 10.0 // 10 ETH for testing
-    };
-    
-    console.log("Error connecting wallet, using test wallet:", walletState);
-    return walletState;
+    throw error;
   }
 };
 

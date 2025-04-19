@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { createMarket, getWalletStatus } from "@/services/mockBlockchainService";
 import { X, Plus, ArrowRight, Clock } from "lucide-react";
 import { getAIPrediction } from "@/services/aiPredictionService";
-import { toast } from "sonner";
 
 // Predefined categories/tags for selection
 const SUGGESTED_TAGS = ["Crypto", "Sports", "Politics", "Technology", "Entertainment", "Finance"];
@@ -18,7 +17,6 @@ const SUGGESTED_TAGS = ["Crypto", "Sports", "Politics", "Technology", "Entertain
 export default function CreateMarket() {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [walletConnected, setWalletConnected] = useState(false);
   const [marketData, setMarketData] = useState({
     title: "",
     description: "",
@@ -32,32 +30,6 @@ export default function CreateMarket() {
     yesPercentage: number;
     noPercentage: number;
   }>(null);
-  
-  // Check wallet connection status on component mount and periodically
-  useEffect(() => {
-    const checkWalletStatus = () => {
-      const wallet = getWalletStatus();
-      setWalletConnected(wallet.connected);
-      
-      // Clear wallet error if wallet is connected
-      if (wallet.connected && errors.wallet) {
-        setErrors(prev => {
-          const newErrors = { ...prev };
-          delete newErrors.wallet;
-          return newErrors;
-        });
-      }
-    };
-    
-    // Check immediately
-    checkWalletStatus();
-    
-    // Set up periodic checks
-    const intervalId = setInterval(checkWalletStatus, 2000);
-    
-    // Cleanup interval on unmount
-    return () => clearInterval(intervalId);
-  }, [errors]);
   
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -161,9 +133,6 @@ export default function CreateMarket() {
     // Check if wallet is connected
     const wallet = getWalletStatus();
     if (!wallet.connected) {
-      toast.error("Wallet not connected", { 
-        description: "Please connect your wallet to create a market" 
-      });
       setErrors(prev => ({ ...prev, wallet: "Please connect your wallet first" }));
       return;
     }
@@ -183,15 +152,10 @@ export default function CreateMarket() {
         marketData.tags
       );
       
-      toast.success("Market created successfully");
-      
       // Navigate to the newly created market
       navigate(`/market/${newMarket.id}`);
     } catch (error) {
       console.error("Failed to create market:", error);
-      toast.error("Failed to create market", {
-        description: "Please try again or check your wallet connection"
-      });
       setErrors(prev => ({ 
         ...prev, 
         submit: "Failed to create market. Please try again." 
