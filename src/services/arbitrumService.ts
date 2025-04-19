@@ -1,3 +1,4 @@
+
 // This service handles interactions with the Arbitrum Stylus blockchain
 
 // Mock wallet state
@@ -5,6 +6,11 @@ let walletState = {
   connected: false,
   address: "",
   balance: 0
+};
+
+// Check if MetaMask is installed
+export const isMetaMaskInstalled = (): boolean => {
+  return window.ethereum !== undefined;
 };
 
 // Initialize blockchain connection
