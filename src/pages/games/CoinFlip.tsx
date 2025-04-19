@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
@@ -90,6 +89,12 @@ export default function CoinFlip() {
       return;
     }
     
+    // Validate minimum bet amount
+    if (parseFloat(betAmount) < 0.001) {
+      toast.error("Minimum bet amount is 0.001 ETH");
+      return;
+    }
+    
     if (!wallet.connected) {
       toast.error("Please connect your wallet to play");
       return;
@@ -131,7 +136,13 @@ export default function CoinFlip() {
       
     } catch (error) {
       console.error("Game error:", error);
-      toast.error("Failed to play. Please try again.");
+      
+      // Show specific error message if available
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to play. Please try again.");
+      } else {
+        toast.error("Failed to play. Please try again.");
+      }
     } finally {
       setIsPlaying(false);
     }

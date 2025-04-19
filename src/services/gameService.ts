@@ -1,8 +1,5 @@
-
 import { getWalletStatus } from "./arbitrumService";
-
-// Game types
-type GameType = "coinflip" | "dice";
+import { GameType, GameResult, GameStats } from "@/types/games";
 
 // Game parameters
 interface GameParams {
@@ -21,26 +18,6 @@ let gameStats: GameStats = {
   winRate: 0
 };
 
-export interface GameResult {
-  id: string;
-  player: string;
-  gameType: GameType;
-  stake: number;
-  prediction: number;
-  outcome: number;
-  payout: number;
-  won: boolean;
-  timestamp: number;
-}
-
-export interface GameStats {
-  totalGames: number;
-  totalWagered: number;
-  totalPayout: number;
-  wins: number;
-  winRate: number;
-}
-
 // Constants
 const COIN_FLIP_MULTIPLIER = 1.95; // 1.95x payout for coinflip
 const DICE_MULTIPLIER = 5.7;       // 5.7x payout for dice roll (6x minus house edge)
@@ -50,6 +27,8 @@ const MAX_BET = 5;                 // Maximum bet amount
 // Play a game
 export const playGame = async (params: GameParams): Promise<GameResult> => {
   const { gameType, betAmount, prediction } = params;
+  
+  console.log("Play game with params:", params);
   
   // Validate bet amount
   if (betAmount < MIN_BET) {
@@ -69,6 +48,17 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
   if (wallet.balance < betAmount) {
     throw new Error("Insufficient balance");
   }
+  
+  // Validate prediction based on game type
+  if (gameType === "coinflip" && (prediction !== 0 && prediction !== 1)) {
+    throw new Error("Invalid prediction for coinflip. Must be 0 (tails) or 1 (heads)");
+  }
+  
+  if (gameType === "dice" && (prediction < 1 || prediction > 6)) {
+    throw new Error("Invalid prediction for dice. Must be between 1 and 6");
+  }
+  
+  console.log("Game validation passed, proceeding with game");
   
   // Simulate blockchain transaction
   // In a real app, this would call the smart contract
@@ -108,6 +98,8 @@ export const playGame = async (params: GameParams): Promise<GameResult> => {
     won,
     timestamp: Date.now()
   };
+  
+  console.log("Game result:", result);
   
   // Add to history
   gameHistory.unshift(result);
