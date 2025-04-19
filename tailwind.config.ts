@@ -18,6 +18,11 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				'sora': ['Sora', 'sans-serif'],
+				'inter': ['Inter', 'sans-serif'],
+				'space': ['Space Grotesk', 'sans-serif'],
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
@@ -61,7 +66,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+        // AIPredict Custom Colors
+        neural: {
+          DEFAULT: '#6E59A5',
+          light: '#9b87f5',
+          dark: '#1A1F2C',
+          accent: '#8B5CF6',
+          highlight: '#D946EF',
+          glow: '#0EA5E9',
+        },
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +98,48 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.6" },
+          "50%": { opacity: "1" },
+        },
+        "float": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
+        "gradient-x": {
+          "0%, 100%": {
+            "background-position": "0% 50%",
+            "background-size": "200% 200%"
+          },
+          "50%": {
+            "background-position": "100% 50%",
+            "background-size": "200% 200%"
+          },
+        },
+        "gradient-y": {
+          "0%, 100%": {
+            "background-position": "50% 0%",
+            "background-size": "200% 200%"
+          },
+          "50%": {
+            "background-position": "50% 100%",
+            "background-size": "200% 200%"
+          },
+        },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        }
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "float": "float 6s ease-in-out infinite",
+        "gradient-x": "gradient-x 15s ease infinite",
+        "gradient-y": "gradient-y 15s ease infinite",
+        "fade-in": "fade-in 0.5s ease-out"
 			}
 		}
 	},
