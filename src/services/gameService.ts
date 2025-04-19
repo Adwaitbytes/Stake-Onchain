@@ -1,101 +1,154 @@
 
-import { GameResult, GameStats } from "@/types/games";
-import { 
-  playCoinFlip, 
-  playDiceRoll, 
-  getUserGameHistory as getBlockchainGameHistory,
-  getUserGameStats as getBlockchainGameStats,
-  getWalletStatus,
-  isMetaMaskInstalled
-} from "./arbitrumService";
-import { toast } from "sonner";
+import { getWalletStatus } from "./arbitrumService";
 
-// Check if wallet is connected before playing
-const checkWalletConnection = async (): Promise<boolean> => {
-  const walletStatus = await getWalletStatus();
-  if (!walletStatus.connected) {
-    if (!isMetaMaskInstalled()) {
-      toast.error("MetaMask not detected. Using test mode for demonstration.");
-      return true; // Allow to proceed in test mode
-    } else {
-      toast.error("Please connect your wallet to play");
-      return false;
-    }
-  }
-  return true;
+// Game types
+type GameType = "coinflip" | "dice";
+
+// Game parameters
+interface GameParams {
+  gameType: GameType;
+  betAmount: number;
+  prediction: number; // 0 or 1 for coinflip (tails/heads), 1-6 for dice
+}
+
+// Mock data for game results
+let gameHistory: GameResult[] = [];
+let gameStats: GameStats = {
+  totalGames: 0,
+  totalWagered: 0,
+  totalPayout: 0,
+  wins: 0,
+  winRate: 0
 };
+
+export interface GameResult {
+  id: string;
+  player: string;
+  gameType: GameType;
+  stake: number;
+  prediction: number;
+  outcome: number;
+  payout: number;
+  won: boolean;
+  timestamp: number;
+}
+
+export interface GameStats {
+  totalGames: number;
+  totalWagered: number;
+  totalPayout: number;
+  wins: number;
+  winRate: number;
+}
+
+// Constants
+const COIN_FLIP_MULTIPLIER = 1.95; // 1.95x payout for coinflip
+const DICE_MULTIPLIER = 5.7;       // 5.7x payout for dice roll (6x minus house edge)
+const MIN_BET = 0.001;             // Minimum bet amount
+const MAX_BET = 5;                 // Maximum bet amount
 
 // Play a game
-export const playGame = async (
-  gameType: 'coinflip' | 'dice',
-  stake: number,
-  playerChoice: string
-): Promise<GameResult> => {
-  try {
-    // Check wallet connection first
-    const isConnected = await checkWalletConnection();
-    if (!isConnected) {
-      throw new Error("Wallet not connected");
-    }
-
-    if (gameType === 'coinflip') {
-      if (playerChoice !== 'heads' && playerChoice !== 'tails') {
-        throw new Error('Invalid choice for coin flip. Must be "heads" or "tails"');
-      }
-      return await playCoinFlip(stake, playerChoice as 'heads' | 'tails');
-    } else if (gameType === 'dice') {
-      return await playDiceRoll(stake, playerChoice);
-    } else {
-      throw new Error('Unsupported game type');
-    }
-  } catch (error) {
-    console.error(`Failed to play ${gameType} game:`, error);
-    throw error;
+export const playGame = async (params: GameParams): Promise<GameResult> => {
+  const { gameType, betAmount, prediction } = params;
+  
+  // Validate bet amount
+  if (betAmount < MIN_BET) {
+    throw new Error(`Minimum bet amount is ${MIN_BET} ETH`);
   }
+  
+  if (betAmount > MAX_BET) {
+    throw new Error(`Maximum bet amount is ${MAX_BET} ETH`);
+  }
+
+  // Get wallet status
+  const wallet = await getWalletStatus();
+  if (!wallet.connected) {
+    throw new Error("Wallet not connected");
+  }
+  
+  if (wallet.balance < betAmount) {
+    throw new Error("Insufficient balance");
+  }
+  
+  // Simulate blockchain transaction
+  // In a real app, this would call the smart contract
+  const transactionPromise = new Promise<void>((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, 2000); // Simulate transaction confirmation time
+  });
+  
+  // Wait for transaction to complete
+  await transactionPromise;
+  
+  // Generate random outcome
+  let outcome: number;
+  if (gameType === "coinflip") {
+    outcome = Math.floor(Math.random() * 2); // 0 or 1
+  } else {
+    outcome = Math.floor(Math.random() * 6) + 1; // 1-6
+  }
+  
+  // Determine if player won
+  const won = prediction === outcome;
+  
+  // Calculate payout
+  const multiplier = gameType === "coinflip" ? COIN_FLIP_MULTIPLIER : DICE_MULTIPLIER;
+  const payout = won ? betAmount * multiplier : 0;
+  
+  // Create game result
+  const result: GameResult = {
+    id: Date.now().toString(),
+    player: wallet.address,
+    gameType,
+    stake: betAmount,
+    prediction,
+    outcome,
+    payout,
+    won,
+    timestamp: Date.now()
+  };
+  
+  // Add to history
+  gameHistory.unshift(result);
+  
+  // Update stats
+  gameStats.totalGames += 1;
+  gameStats.totalWagered += betAmount;
+  
+  if (won) {
+    gameStats.wins += 1;
+    gameStats.totalPayout += payout;
+    
+    // Update wallet balance (simulate winning)
+    wallet.balance = wallet.balance - betAmount + payout;
+  } else {
+    // Update wallet balance (simulate losing)
+    wallet.balance = wallet.balance - betAmount;
+  }
+  
+  // Calculate win rate
+  gameStats.winRate = (gameStats.wins / gameStats.totalGames) * 100;
+  
+  return result;
 };
 
-// Get game history for a user
-export const getUserGameHistory = async (gameType?: 'coinflip' | 'dice'): Promise<GameResult[]> => {
-  try {
-    const isConnected = await checkWalletConnection();
-    if (!isConnected && !isMetaMaskInstalled()) {
-      // In test mode, we still return the mock history
-      return await getBlockchainGameHistory(gameType);
-    } else if (!isConnected) {
-      return [];
-    }
-    
-    return await getBlockchainGameHistory(gameType);
-  } catch (error) {
-    console.error('Failed to get game history:', error);
-    return [];
+// Get user's game history
+export const getUserGameHistory = async (gameType?: GameType): Promise<GameResult[]> => {
+  // In a real app, this would fetch from the blockchain
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+  
+  if (gameType) {
+    return gameHistory.filter(game => game.gameType === gameType);
   }
+  
+  return gameHistory;
 };
 
-// Get game statistics for a user
-export const getUserGameStats = async (gameType?: 'coinflip' | 'dice'): Promise<GameStats> => {
-  try {
-    const isConnected = await checkWalletConnection();
-    if (!isConnected && !isMetaMaskInstalled()) {
-      // In test mode, we still return the mock stats
-      return await getBlockchainGameStats(gameType);
-    } else if (!isConnected) {
-      return {
-        totalGames: 0,
-        totalWagered: 0,
-        totalPayout: 0,
-        winRate: 0
-      };
-    }
-    
-    return await getBlockchainGameStats(gameType);
-  } catch (error) {
-    console.error('Failed to get game stats:', error);
-    return {
-      totalGames: 0,
-      totalWagered: 0,
-      totalPayout: 0,
-      winRate: 0
-    };
-  }
+// Get user's game stats
+export const getUserGameStats = async (): Promise<GameStats> => {
+  // In a real app, this would fetch from the blockchain
+  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API call
+  
+  return gameStats;
 };
