@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
 import { getUserGameStats } from "@/services/gameService";
 import { getWalletStatus } from "@/services/mockBlockchainService";
 import { GameStats } from "@/types/games";
-import { Dices, CoinIcon, Dice1, Trophy, Info } from "lucide-react";
+import { Dices, CoinsIcon, Dice1, Trophy, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -30,7 +29,6 @@ export default function Games() {
     fetchStats();
   }, []);
   
-  // Calculate profit/loss
   const netProfit = stats ? stats.totalPayout - stats.totalWagered : 0;
   const profitPercentage = stats && stats.totalWagered > 0 
     ? (netProfit / stats.totalWagered) * 100
@@ -58,13 +56,12 @@ export default function Games() {
             )}
           </div>
           
-          {/* Game selection */}
           <div className="grid md:grid-cols-2 gap-6 mb-10">
             <Link to="/games/coin-flip">
               <div className="glass-card rounded-xl p-6 h-full hover:scale-[1.02] transition-transform duration-300 neural-glow flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-xl font-semibold">Coin Flip</h2>
-                  <CoinIcon className="h-8 w-8 text-yellow-400" />
+                  <CoinsIcon className="h-8 w-8 text-yellow-400" />
                 </div>
                 <p className="text-muted-foreground mb-6">
                   Flip a coin and double your stake! Guess heads or tails correctly to win.
@@ -111,7 +108,6 @@ export default function Games() {
             </Link>
           </div>
           
-          {/* Stats section */}
           {wallet.connected ? (
             <div className="glass-card rounded-xl p-6">
               <div className="flex items-center mb-6">
@@ -181,7 +177,7 @@ export default function Games() {
                   <div className="flex flex-wrap justify-center gap-4">
                     <Link to="/games/coin-flip">
                       <Button>
-                        <CoinIcon className="mr-2 h-4 w-4" />
+                        <CoinsIcon className="mr-2 h-4 w-4" />
                         Try Coin Flip
                       </Button>
                     </Link>
@@ -205,7 +201,6 @@ export default function Games() {
             </div>
           )}
           
-          {/* How it works section */}
           <div className="mt-10">
             <h2 className="text-2xl font-semibold mb-6">How It Works</h2>
             

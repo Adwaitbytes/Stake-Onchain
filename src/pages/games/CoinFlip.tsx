@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
@@ -8,7 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { getWalletStatus } from "@/services/mockBlockchainService";
 import { playGame, getUserGameHistory, getUserGameStats } from "@/services/gameService";
 import { GameResult, GameStats } from "@/types/games";
-import { ArrowLeft, CoinIcon, History, Check, X, AlertCircle } from "lucide-react";
+import { ArrowLeft, CoinsIcon, History, Check, X, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -168,7 +167,7 @@ export default function CoinFlip() {
                   // Game interface
                   <div>
                     <div className="flex justify-center mb-6">
-                      <CoinIcon className="h-20 w-20 text-yellow-400" />
+                      <CoinsIcon className="h-20 w-20 text-yellow-400" />
                     </div>
                     
                     <div className="text-center mb-6">
