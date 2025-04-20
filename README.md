@@ -1,73 +1,90 @@
-# Welcome to your Lovable project
+# 🔮 Stake-Onchain
 
-## Project info
+**Stake-Onchain** is an **AI-powered decentralized prediction and staking market** built on **Arbitrum Stylus**, designed for speed, low gas fees, and enhanced scalability. Whether it's flip a coin game or dice roll this platform gives a fully fair chance to win the game also wether it is political outcomes, sports, crypto trends, or real-world events — you can stake, predict, and earn.
 
-**URL**: https://lovable.dev/projects/67af037b-0090-494a-a678-354f35711cf5
+>  **Built during Core Nexus to showcase the power of Arbitrum and decentralized predictions.**
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Why Arbitrum?
 
-**Use Lovable**
+Stake-Onchain is deployed on **Arbitrum Stylus**, leveraging:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/67af037b-0090-494a-a678-354f35711cf5) and start prompting.
+- **Low Gas Fees**  
+- **High Throughput**  
+- **Ethereum-level Security**  
+- **Stylus Support**: Run AI-enhanced smart contracts using WebAssembly (WASM)
 
-Changes made via Lovable will be committed automatically to this repo.
+Arbitrum enables us to deliver an ultra-fast, reliable, and cost-effective prediction market that scales with users — **perfect for mainstream adoption**.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## ✨ Features
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- **AI-Enhanced Predictions**  
+  Integrates intelligent algorithms to analyze trends and offer data-driven insights.
 
-Follow these steps:
+- **Fully On-Chain**  
+  Transparent and trustless predictions, verifiable by anyone.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+- **Stake to Predict**  
+  Stake tokens on possible outcomes and earn rewards if your predictions are accurate.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- **Wallet-Integrated**  
+  Seamlessly connect your wallet (MetaMask) to start predicting and staking.
 
-# Step 3: Install the necessary dependencies.
-npm i
+- **Live Markets**  
+  Real-time updates on open prediction markets and outcomes.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+---
+
+## 🛠 Tech Stack
+
+| Tech            | Description                                |
+|-----------------|--------------------------------------------|
+| **Next.js**     | React-based framework for frontend         |
+| **Arbitrum Stylus** | Layer 2 solution for high-performance smart contracts |
+| **Solidity/WASM** | Smart contracts for managing predictions |
+| **Firebase**    | Authentication and backend services        |
+| **Bitcoin Gateway** | For Bitcoin-related predictions/payments |
+| **Tailwind CSS**| Utility-first styling                      |
+
+---
+
+## 🚀 Getting Started
+
+To run **Stake-Onchain** locally:
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/yourusername/stake-onchain.git
+cd stake-onchain
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Set Up Environment Variables
+
+Create a `.env.local` file in the root directory and add all the required environment variables.
+
+### 4. Run the App
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 5. Open in Browser
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Visit [http://localhost:3000](http://localhost:3000)
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 🔗 Deployed Smart Contract (Arbitrum Sepolia Testnet)
 
-## What technologies are used for this project?
+**Contract Address**: `0x655fe514081bfdf6829b6fbffd9d58a9e6b1679d`
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/67af037b-0090-494a-a678-354f35711cf5) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
