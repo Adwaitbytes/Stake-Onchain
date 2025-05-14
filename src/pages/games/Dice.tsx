@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { getWalletStatus } from "@/services/arbitrumService";
+import { getWalletStatus } from "@/services/solanaService";
 import { playGame, getUserGameHistory, getUserGameStats } from "@/services/gameService";
 import { GameResult, GameStats } from "@/types/games";
 import { ArrowLeft, Dice1, Dice2, Dice3, Dice4, Dice5, Dice6, History, Check, X, AlertCircle } from "lucide-react";
@@ -135,7 +134,7 @@ export default function Dice() {
         loadGameStats();
         
         if (result.won) {
-          toast.success(`You won ${result.payout.toFixed(4)} ETH!`);
+          toast.success(`You won ${result.payout.toFixed(4)} SOL!`);
         } else {
           toast.error("Better luck next time!");
         }
@@ -178,7 +177,7 @@ export default function Dice() {
         <div className={`mt-4 text-2xl font-bold ${gameResult.won ? 'text-green-500' : 'text-red-500'}`}>
           {gameResult.won ? (
             <div className="flex items-center justify-center">
-              <Check className="mr-2" /> You Won {gameResult.payout.toFixed(4)} ETH!
+              <Check className="mr-2" /> You Won {gameResult.payout.toFixed(4)} SOL!
             </div>
           ) : (
             <div className="flex items-center justify-center">
@@ -209,7 +208,7 @@ export default function Dice() {
               <div className="mt-4 md:mt-0">
                 <div className="glass-card rounded-lg p-3 text-sm">
                   <div className="text-muted-foreground mb-1">Your Balance</div>
-                  <div className="text-xl font-semibold">{wallet.balance.toFixed(4)} ETH</div>
+                  <div className="text-xl font-semibold">{wallet.balance.toFixed(4)} SOL</div>
                 </div>
               </div>
             )}
@@ -242,7 +241,7 @@ export default function Dice() {
                     <>
                       <div className="mb-6">
                         <label className="block text-sm font-medium text-muted-foreground mb-2">
-                          Bet Amount (ETH)
+                          Bet Amount (SOL)
                         </label>
                         <div className="relative">
                           <Input
@@ -267,8 +266,8 @@ export default function Dice() {
                         {wallet.connected && (
                           <div className="text-sm text-muted-foreground mt-1">
                             Potential win: {betAmount && parseFloat(betAmount) > 0 
-                              ? (parseFloat(betAmount) * 5.7).toFixed(4) + " ETH" 
-                              : "0.00 ETH"}
+                              ? (parseFloat(betAmount) * 5.7).toFixed(4) + " SOL" 
+                              : "0.00 SOL"}
                           </div>
                         )}
                       </div>
@@ -336,12 +335,12 @@ export default function Dice() {
                   
                   <div className="flex justify-between py-2 border-b border-white/10">
                     <span>Min Bet</span>
-                    <span>0.001 ETH</span>
+                    <span>0.001 SOL</span>
                   </div>
                   
                   <div className="flex justify-between py-2">
                     <span>Max Bet</span>
-                    <span>5 ETH</span>
+                    <span>5 SOL</span>
                   </div>
                 </div>
               </div>
@@ -363,7 +362,7 @@ export default function Dice() {
                     <div className="flex justify-between py-2">
                       <span>Net Profit</span>
                       <span className={`font-semibold ${(stats.totalPayout - stats.totalWagered) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {(stats.totalPayout - stats.totalWagered).toFixed(4)} ETH
+                        {(stats.totalPayout - stats.totalWagered).toFixed(4)} SOL
                       </span>
                     </div>
                   </div>
@@ -410,7 +409,7 @@ export default function Dice() {
                           <div className={`text-sm ${game.won ? 'text-green-400' : 'text-red-400'}`}>
                             {game.won ? `+${game.payout.toFixed(4)}` : `-${game.stake.toFixed(4)}`}
                           </div>
-                          <div className="text-xs text-muted-foreground">ETH</div>
+                          <div className="text-xs text-muted-foreground">SOL</div>
                         </div>
                       </div>
                     ))}

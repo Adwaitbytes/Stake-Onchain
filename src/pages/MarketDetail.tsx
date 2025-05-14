@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
@@ -114,7 +113,7 @@ export default function MarketDetail() {
       const updatedBets = await getUserBets(market.id);
       setUserBets(updatedBets);
       
-      setSuccessMessage(`Successfully placed a ${betAmount} ETH bet on ${betSide.toUpperCase()}`);
+      setSuccessMessage(`Successfully placed a ${betAmount} SOL bet on ${betSide.toUpperCase()}`);
       
       // Reset form
       setBetAmount("");
@@ -167,7 +166,7 @@ export default function MarketDetail() {
         const updatedBets = await getUserBets(id);
         setUserBets(updatedBets);
         
-        setSuccessMessage(`Successfully claimed ${result.amount.toFixed(2)} ETH`);
+        setSuccessMessage(`Successfully claimed ${result.amount.toFixed(2)} SOL`);
       } else {
         setError("No winnings to claim");
       }
@@ -315,13 +314,13 @@ export default function MarketDetail() {
                 <div className="grid grid-cols-2 gap-6 mb-4">
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">Yes Pool</div>
-                    <div className="text-2xl font-semibold">{totalYesBets.toFixed(2)} ETH</div>
+                    <div className="text-2xl font-semibold">{totalYesBets.toFixed(2)} SOL</div>
                     <div className="text-sm font-medium text-green-400">{yesPercentage}%</div>
                   </div>
                   
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">No Pool</div>
-                    <div className="text-2xl font-semibold">{totalNoBets.toFixed(2)} ETH</div>
+                    <div className="text-2xl font-semibold">{totalNoBets.toFixed(2)} SOL</div>
                     <div className="text-sm font-medium text-red-400">{noPercentage}%</div>
                   </div>
                 </div>
@@ -331,7 +330,7 @@ export default function MarketDetail() {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <div className="text-sm text-muted-foreground mb-1">Total Pool</div>
-                    <div className="text-2xl font-semibold">{totalPool.toFixed(2)} ETH</div>
+                    <div className="text-2xl font-semibold">{totalPool.toFixed(2)} SOL</div>
                   </div>
                 </div>
               </div>
@@ -344,12 +343,12 @@ export default function MarketDetail() {
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     <div>
                       <div className="text-sm text-muted-foreground mb-1">Your Yes Bets</div>
-                      <div className="text-2xl font-semibold">{getUserBetTotal(true).toFixed(2)} ETH</div>
+                      <div className="text-2xl font-semibold">{getUserBetTotal(true).toFixed(2)} SOL</div>
                     </div>
                     
                     <div>
                       <div className="text-sm text-muted-foreground mb-1">Your No Bets</div>
-                      <div className="text-2xl font-semibold">{getUserBetTotal(false).toFixed(2)} ETH</div>
+                      <div className="text-2xl font-semibold">{getUserBetTotal(false).toFixed(2)} SOL</div>
                     </div>
                   </div>
                   
@@ -422,11 +421,11 @@ export default function MarketDetail() {
                     <>
                       <div className="mb-4">
                         <div className="text-sm text-muted-foreground mb-1">Your Balance</div>
-                        <div className="text-lg font-semibold">{walletStatus.balance.toFixed(2)} ETH</div>
+                        <div className="text-lg font-semibold">{walletStatus.balance.toFixed(2)} SOL</div>
                       </div>
                       
                       <div className="mb-4">
-                        <label className="text-sm text-muted-foreground block mb-2">Bet Amount (ETH)</label>
+                        <label className="text-sm text-muted-foreground block mb-2">Bet Amount (SOL)</label>
                         <Input
                           type="text"
                           value={betAmount}

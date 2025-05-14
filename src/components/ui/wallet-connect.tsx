@@ -1,9 +1,9 @@
-
 import { useState, useEffect } from "react";
-import { connectWallet, disconnectWallet, getWalletStatus, isMetaMaskInstalled } from "@/services/arbitrumService";
+import { connectWallet, disconnectWallet, getWalletStatus, isPhantomInstalled, updateWalletBalance } from "@/services/solanaService";
 import { Button } from "@/components/ui/button";
 import { Wallet, AlertCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 
 interface WalletConnectProps {
   className?: string;
@@ -19,17 +19,22 @@ export function WalletConnect({ className }: WalletConnectProps) {
   });
 
   useEffect(() => {
-    const checkWalletStatus = () => {
+    const checkWalletStatus = async () => {
       try {
-        // Check if MetaMask is installed
-        const metaMaskInstalled = isMetaMaskInstalled();
+        // Check if Phantom is installed
+        const phantomInstalled = isPhantomInstalled();
         
-        if (!metaMaskInstalled) {
+        if (!phantomInstalled) {
           setWalletState(prev => ({
             ...prev,
             testMode: true
           }));
-          console.log("MetaMask not detected, using test mode");
+          console.log("Phantom wallet not detected, using test mode");
+        }
+        
+        // Update balance from blockchain first
+        if (phantomInstalled && window.solana?.isConnected) {
+          await updateWalletBalance();
         }
         
         const status = getWalletStatus();
@@ -38,7 +43,7 @@ export function WalletConnect({ className }: WalletConnectProps) {
           connected: status.connected,
           address: status.address,
           balance: status.balance,
-          testMode: !metaMaskInstalled && status.connected
+          testMode: !phantomInstalled && status.connected
         }));
       } catch (error) {
         console.error("Failed to get wallet status:", error);
@@ -48,32 +53,20 @@ export function WalletConnect({ className }: WalletConnectProps) {
     checkWalletStatus();
     
     // Set up event listeners for wallet changes
-    if (window.ethereum) {
-      const handleAccountsChanged = async (accounts: string[]) => {
-        if (accounts.length === 0) {
-          // User disconnected their wallet
-          await handleDisconnect();
-        } else {
-          // Account changed, update state
-          checkWalletStatus();
-        }
+    if (window.solana) {
+      const handleAccountsChanged = async () => {
+        // Account changed, update state
+        await checkWalletStatus();
       };
       
-      const handleChainChanged = () => {
-        // Chain changed, refresh the page
-        window.location.reload();
-      };
-      
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
+      window.solana.on('accountChanged', handleAccountsChanged);
       
       // Set up an interval to check wallet status periodically
       // This ensures the UI stays in sync with the actual wallet balance
       const intervalId = setInterval(checkWalletStatus, 2000);
       
       return () => {
-        window.ethereum?.removeListener('accountsChanged', handleAccountsChanged);
-        window.ethereum?.removeListener('chainChanged', handleChainChanged);
+        window.solana?.removeListener('accountChanged', handleAccountsChanged);
         clearInterval(intervalId);
       };
     }
@@ -86,43 +79,58 @@ export function WalletConnect({ className }: WalletConnectProps) {
   const handleConnect = async () => {
     setWalletState(prev => ({ ...prev, isConnecting: true }));
     try {
-      const metaMaskInstalled = isMetaMaskInstalled();
+      const phantomInstalled = isPhantomInstalled();
       
-      if (!metaMaskInstalled) {
-        // If MetaMask is not installed, use test mode or prompt to install
-        toast.info("MetaMask not detected", {
+      if (!phantomInstalled) {
+        // If Phantom is not installed, prompt to install
+        toast.info("Phantom wallet not detected", {
           description: (
             <div className="flex flex-col gap-2">
-              <div>Using test mode for demonstration</div>
+              <div>Please install Phantom wallet to continue</div>
               <a 
-                href="https://metamask.io/download/" 
+                href="https://phantom.app/download" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center text-neural-accent hover:underline"
               >
-                Install MetaMask <ExternalLink className="h-3 w-3 ml-1" />
+                Install Phantom <ExternalLink className="h-3 w-3 ml-1" />
               </a>
             </div>
           ),
           duration: 5000
         });
+        setWalletState(prev => ({ ...prev, isConnecting: false }));
+        return;
       }
       
-      const { address, balance } = await connectWallet();
-      setWalletState({
-        connected: true,
-        address,
-        balance,
-        isConnecting: false,
-        testMode: !metaMaskInstalled 
-      });
-      
-      if (metaMaskInstalled) {
-        toast.success("Wallet connected successfully");
+      // Check if Phantom is on the correct network (Devnet)
+      if (window.solana) {
+        try {
+          // Connect to wallet
+          const { address, balance } = await connectWallet();
+          
+          setWalletState({
+            connected: true,
+            address,
+            balance,
+            isConnecting: false,
+            testMode: false
+          });
+          
+          toast.success("Wallet connected successfully", {
+            description: "Connected to Solana Devnet"
+          });
+        } catch (error) {
+          console.error("Failed to connect wallet:", error);
+          toast.error("Failed to connect wallet", {
+            description: "Please make sure Phantom wallet is unlocked and set to Solana Devnet"
+          });
+        }
       }
     } catch (error) {
       console.error("Failed to connect wallet:", error);
-      toast.error("Failed to connect wallet. Please make sure MetaMask is installed and unlocked.");
+      toast.error("Failed to connect wallet. Please make sure Phantom wallet is installed and unlocked.");
+    } finally {
       setWalletState(prev => ({ ...prev, isConnecting: false }));
     }
   };
@@ -152,15 +160,12 @@ export function WalletConnect({ className }: WalletConnectProps) {
     <div className={className}>
       {walletState.connected ? (
         <div className="flex items-center gap-4">
-          {walletState.testMode && (
-            <div className="items-center hidden md:flex">
-              <AlertCircle className="h-4 w-4 text-yellow-500 mr-1" />
-              <span className="text-xs text-yellow-500">Test Mode</span>
-            </div>
-          )}
+          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20">
+            Devnet
+          </Badge>
           <div className="hidden md:block">
             <div className="text-sm text-gray-400">
-              Balance: <span className="font-medium text-neural-light">{walletState.balance.toFixed(2)} ETH</span>
+              Balance: <span className="font-medium text-neural-light">{walletState.balance.toFixed(4)} SOL</span>
             </div>
             <div className="text-sm font-medium truncate">{formatAddress(walletState.address)}</div>
           </div>

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -50,7 +49,7 @@ export default function Home() {
           <div className="container mx-auto px-4 relative">
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight ai-gradient-text">
-                Bet on the Future. <br/>Powered by AI.
+                Bet on the Future <br/>Powered by AI
               </h1>
               
               <p className="text-xl md:text-2xl text-muted-foreground mb-8 leading-relaxed">
@@ -80,7 +79,7 @@ export default function Home() {
         {/* Features section */}
         <section className="py-16 bg-gradient-to-b from-transparent to-neural-dark/30">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-12 ai-gradient-text">Powered by Arbitrum Stylus</h2>
+            <h2 className="text-3xl font-bold text-center mb-12 ai-gradient-text">Powered by Solana</h2>
             
             <div className="grid md:grid-cols-3 gap-8">
               <div className="glass-card rounded-xl p-6 text-center">
@@ -89,7 +88,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Fast Confirmations</h3>
                 <p className="text-muted-foreground">
-                  Arbitrum Stylus delivers fast transaction confirmations with minimal wait times.
+                  Solana delivers fast transaction confirmations with minimal wait times.
                 </p>
               </div>
               
@@ -99,7 +98,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Low Gas Fees</h3>
                 <p className="text-muted-foreground">
-                  Enjoy drastically lower gas fees compared to Layer 1, making small bets economical.
+                  Enjoy drastically lower gas fees compared to others, making small bets economical.
                 </p>
               </div>
               
@@ -200,7 +199,7 @@ export default function Home() {
               <div className="text-2xl font-bold bg-gradient-to-r from-neural-light via-neural-highlight to-neural-glow bg-clip-text text-transparent">
                 AIPredict
               </div>
-              <p className="text-sm text-muted-foreground mt-1">AI-Powered Prediction Markets on Arbitrum Stylus</p>
+              <p className="text-sm text-muted-foreground mt-1">AI-Powered Prediction Markets on Solana</p>
             </div>
             
             <div className="text-sm text-muted-foreground">

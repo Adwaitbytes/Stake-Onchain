@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
 import { getUserGameStats } from "@/services/gameService";
-import { getWalletStatus } from "@/services/arbitrumService";
+import { getWalletStatus } from "@/services/solanaService";
 import { GameStats } from "@/types/games";
 import { Dices, CoinsIcon, Dice1, Trophy, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -62,17 +61,8 @@ export default function Games() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
             <div>
               <h1 className="text-3xl font-bold mb-2">Provably Fair Games</h1>
-              <p className="text-muted-foreground">Stake ETH and test your luck on Arbitrum Stylus</p>
+              <p className="text-muted-foreground">Stake SOL and test your luck on Solana.</p>
             </div>
-            
-            {wallet.connected && (
-              <div className="mt-4 md:mt-0">
-                <div className="glass-card rounded-lg p-3 text-sm">
-                  <div className="text-muted-foreground mb-1">Your Balance</div>
-                  <div className="text-xl font-semibold">{wallet.balance.toFixed(2)} ETH</div>
-                </div>
-              </div>
-            )}
           </div>
           
           <div className="grid md:grid-cols-2 gap-6 mb-10">
@@ -154,12 +144,12 @@ export default function Games() {
                     
                     <div className="glass-card rounded-lg p-4">
                       <div className="text-sm text-muted-foreground mb-1">Total Wagered</div>
-                      <div className="text-2xl font-semibold">{stats.totalWagered.toFixed(2)} ETH</div>
+                      <div className="text-2xl font-semibold">{stats.totalWagered.toFixed(2)} SOL</div>
                     </div>
                     
                     <div className="glass-card rounded-lg p-4">
                       <div className="text-sm text-muted-foreground mb-1">Total Payout</div>
-                      <div className="text-2xl font-semibold">{stats.totalPayout.toFixed(2)} ETH</div>
+                      <div className="text-2xl font-semibold">{stats.totalPayout.toFixed(2)} SOL</div>
                     </div>
                   </div>
                   
@@ -181,7 +171,7 @@ export default function Games() {
                         </TooltipProvider>
                       </div>
                       <div className={`font-semibold ${netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                        {netProfit >= 0 ? '+' : ''}{netProfit.toFixed(2)} ETH ({profitPercentage.toFixed(1)}%)
+                        {netProfit >= 0 ? '+' : ''}{netProfit.toFixed(2)} SOL ({profitPercentage.toFixed(1)}%)
                       </div>
                     </div>
                     <Progress 
