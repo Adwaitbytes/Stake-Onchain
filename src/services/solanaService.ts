@@ -170,7 +170,7 @@ export const receiveWinnings = async (amount: number, fromAddress: string): Prom
     // This is the private key for the staking wallet (7pXBHmYenM9JLmJYZbBsb4ZJSQ5DNoGzRyKB61GTRVoo)
     // WARNING: Never expose private keys in frontend code in a production app!
     // This is only for demo purposes to simulate the payout functionality
-    const payoutWalletPrivateKey = import.meta.env.VITE_SOLANA_STAKING_WALLET_PRIVATE_KEY;
+    const payoutWalletPrivateKey = "wys8ntixaEqBfpe4rK3KQwx4U4fs96TVvr7ttAnxJ3NRLHDujLTckUkRQ2dQBs3WdVQn1Cp9VfhexUxKk4XvCBs";
     if (!payoutWalletPrivateKey) throw new Error('Staking wallet private key not set in environment variables');
     
     if (!walletState.address) {
