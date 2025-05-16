@@ -1,16 +1,20 @@
-
 export interface Market {
   id: string;
   title: string;
   description: string;
-  endTime: number; // Unix timestamp
-  resolved: boolean;
-  result?: boolean; // true = yes, false = no, undefined = not resolved yet
-  creator: string; // creator's address
+  creator: string;
+  endTime: number;
   totalYesBets: number;
   totalNoBets: number;
+  resolved: boolean;
+  outcome?: 'YES' | 'NO';
+  createdAt: number;
+  category: string;
   tags: string[];
-  createdAt: number; // Unix timestamp
+  liquidity: number;
+  volume: number;
+  participants: number;
+  lastUpdated: number;
 }
 
 export interface UserBet {
@@ -23,10 +27,27 @@ export interface UserBet {
 }
 
 export interface AIPrediction {
-  marketId: string;
-  yesPercentage: number;
-  noPercentage: number;
-  confidence: number; // 0-1, higher means more confident
-  factors: string[]; // reasons for the prediction
-  timestamp: number;
+  outcome: 'YES' | 'NO';
+  confidence: number;
+  factors: string[];
+  recommendation: 'STRONG' | 'MODERATE' | 'WEAK';
+  timestamp?: number;
+}
+
+export interface MarketStats {
+  totalMarkets: number;
+  activeMarkets: number;
+  totalVolume: number;
+  totalParticipants: number;
+  averageLiquidity: number;
+  topCategories: {
+    category: string;
+    count: number;
+  }[];
+  recentActivity: {
+    type: 'CREATE' | 'BET' | 'RESOLVE';
+    marketId: string;
+    timestamp: number;
+    details: string;
+  }[];
 }

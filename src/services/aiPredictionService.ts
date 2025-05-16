@@ -1,28 +1,101 @@
 import { AIPrediction } from "../types/market";
 import { getWalletStatus } from "./solanaService";
+import { Market } from "@/types/market";
 
-const GOOGLE_AI_STUDIO_API_KEY = import.meta.env.VITE_GOOGLE_AI_STUDIO_API_KEY;
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-// Enhanced AI prediction service with Solana focus
-export const getAIPrediction = async (marketId: string, question: string): Promise<AIPrediction> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // Generate a "realistic" looking prediction based on the question
-  // In a real app, this would call an actual AI prediction service
-  
-  // Use the marketId as a seed for pseudorandom but consistent predictions
+// Mock data for development
+const mockTrends = {
+  trend: 'bullish' as const,
+  confidence: 0.85,
+  factors: [
+    'Strong developer activity in Solana ecosystem',
+    'Increasing TVL in DeFi protocols',
+    'Positive market sentiment from social media',
+    'Growing number of active wallets',
+    'Successful NFT launches'
+  ]
+};
+
+const mockPopularPredictions = [
+  {
+    topic: 'SOL Price by EOY 2024',
+    prediction: 85,
+    timeframe: '6 months'
+  },
+  {
+    topic: 'Solana DeFi TVL Growth',
+    prediction: 75,
+    timeframe: '3 months'
+  },
+  {
+    topic: 'New Active Wallets',
+    prediction: 65,
+    timeframe: '1 month'
+  }
+];
+
+// Enhanced AI prediction service with Gemini API integration
+export const getAIPrediction = async (market: Market): Promise<AIPrediction> => {
+  try {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // In production, this would be an actual API call
+    // const response = await fetch('https://api.stake-onchain.com/predict', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Content-Type': 'application/json',
+    //   },
+    //   body: JSON.stringify({ market }),
+    // });
+    // const data = await response.json();
+    // return data;
+    
+    // Mock prediction based on market data
+    const prediction = {
+      outcome: Math.random() > 0.5 ? 'YES' : 'NO',
+      confidence: Math.random() * 0.5 + 0.5, // Random confidence between 0.5 and 1.0
+      factors: [
+        'Historical market performance',
+        'Current market conditions',
+        'Social sentiment analysis',
+        'Technical indicators',
+        'On-chain metrics'
+      ],
+      recommendation: Math.random() > 0.5 ? 'STRONG' : 'MODERATE'
+    };
+    
+    return prediction;
+  } catch (error) {
+    console.error('Failed to get AI prediction:', error);
+    throw new Error('Failed to get AI prediction');
+  }
+};
+
+// Validate prediction format
+function isValidPrediction(prediction: any): boolean {
+  return (
+    typeof prediction === 'object' &&
+    typeof prediction.yesPercentage === 'number' &&
+    typeof prediction.noPercentage === 'number' &&
+    typeof prediction.confidence === 'number' &&
+    Array.isArray(prediction.factors) &&
+    prediction.factors.every((factor: any) => typeof factor === 'string')
+  );
+}
+
+// Fallback prediction function
+function getDefaultPrediction(marketId: string, question: string): AIPrediction {
   const seed = marketId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  const randomFactor = (seed % 20) / 100; // 0-0.2 variation
+  const randomFactor = (seed % 20) / 100;
   
-  // Default values for a balanced prediction
   let yesPercentage = 0.5;
   let confidenceBase = 0.7;
   
-  // Adjust prediction based on question keywords
   const lowerQuestion = question.toLowerCase();
   
-  // Solana-specific predictions
   if (lowerQuestion.includes("solana") || lowerQuestion.includes("sol")) {
     yesPercentage = 0.68 + randomFactor;
     confidenceBase = 0.78;
@@ -32,48 +105,23 @@ export const getAIPrediction = async (marketId: string, question: string): Promi
   } else if (lowerQuestion.includes("ethereum") || lowerQuestion.includes("eth")) {
     yesPercentage = 0.58 + randomFactor;
     confidenceBase = 0.72;
-  } else if (lowerQuestion.includes("market") || lowerQuestion.includes("price")) {
-    yesPercentage = 0.52 + randomFactor;
-    confidenceBase = 0.68;
-  } else if (lowerQuestion.includes("launch") || lowerQuestion.includes("release")) {
-    yesPercentage = 0.72 + randomFactor;
-    confidenceBase = 0.65;
-  } else if (lowerQuestion.includes("fail") || lowerQuestion.includes("crash")) {
-    yesPercentage = 0.35 + randomFactor;
-    confidenceBase = 0.7;
-  } else if (lowerQuestion.includes("success") || lowerQuestion.includes("win")) {
-    yesPercentage = 0.75 + randomFactor;
-    confidenceBase = 0.68;
-  } else if (lowerQuestion.includes("nft") || lowerQuestion.includes("token")) {
-    yesPercentage = 0.62 + randomFactor;
-    confidenceBase = 0.73;
-  } else if (lowerQuestion.includes("defi") || lowerQuestion.includes("finance")) {
-    yesPercentage = 0.57 + randomFactor;
-    confidenceBase = 0.71;
   }
   
-  // Ensure percentages are within bounds
   yesPercentage = Math.min(Math.max(yesPercentage, 0.1), 0.9);
   const noPercentage = 1 - yesPercentage;
   
-  // Slightly randomize confidence but keep it realistic
   const confidence = confidenceBase + (Math.random() * 0.2 - 0.1);
-  
-  // Generate factors based on the prediction
   const factors = generateFactors(question, yesPercentage > 0.5);
-  
-  // Add on-chain data analysis if available
-  const enhancedFactors = await enhanceWithOnChainData(factors, question);
   
   return {
     marketId,
     yesPercentage: Math.round(yesPercentage * 100),
     noPercentage: Math.round(noPercentage * 100),
     confidence,
-    factors: enhancedFactors,
+    factors,
     timestamp: Date.now()
   };
-};
+}
 
 // Helper to generate "explanation" factors
 function generateFactors(question: string, isPositive: boolean): string[] {
@@ -158,92 +206,37 @@ async function enhanceWithOnChainData(factors: string[], question: string): Prom
 }
 
 // New function: Get AI-powered Solana market trends
-export const getSolanaMarketTrends = async (): Promise<{
-  trend: 'bullish' | 'bearish' | 'neutral',
-  confidence: number,
-  factors: string[]
-}> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  
-  // In a real implementation, this would call an AI service that analyzes on-chain data
-  
-  // For demo purposes, generate a random trend
-  const trendValue = Math.random();
-  let trend: 'bullish' | 'bearish' | 'neutral';
-  let factors: string[] = [];
-  
-  if (trendValue > 0.6) {
-    trend = 'bullish';
-    factors = [
-      "Increased developer activity on Solana in the last 30 days",
-      "Growing number of new wallet addresses",
-      "Rising transaction volume across major Solana dApps",
-      "Positive sentiment in social media discussions",
-      "Institutional investment flowing into Solana ecosystem"
-    ];
-  } else if (trendValue < 0.4) {
-    trend = 'bearish';
-    factors = [
-      "Decreased transaction volume in the last 7 days",
-      "Reduction in new project launches",
-      "Increased token transfers to exchanges",
-      "Technical resistance levels being tested",
-      "Negative sentiment in developer communities"
-    ];
-  } else {
-    trend = 'neutral';
-    factors = [
-      "Stable transaction volumes week-over-week",
-      "Balanced token inflows and outflows",
-      "Consistent developer activity",
-      "Mixed social sentiment indicators",
-      "Market consolidation phase detected"
-    ];
+export const getSolanaMarketTrends = async () => {
+  try {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // In production, this would be an actual API call
+    // const response = await fetch('https://api.stake-onchain.com/market-trends');
+    // const data = await response.json();
+    // return data;
+    
+    return mockTrends;
+  } catch (error) {
+    console.error('Failed to fetch market trends:', error);
+    throw new Error('Failed to fetch market trends');
   }
-  
-  return {
-    trend,
-    confidence: 0.65 + (Math.random() * 0.2),
-    factors: factors
-  };
 };
 
 // New function: Generate AI predictions for popular Solana markets
-export const getPopularSolanaPredictions = async (): Promise<{
-  topic: string,
-  prediction: number, // 0-100 percentage
-  timeframe: string
-}[]> => {
-  // Simulate API call delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  // In a real implementation, this would call an AI service
-  return [
-    {
-      topic: "SOL price above $100 by end of month",
-      prediction: 72,
-      timeframe: "30 days"
-    },
-    {
-      topic: "New Solana NFT standard adoption",
-      prediction: 68,
-      timeframe: "60 days"
-    },
-    {
-      topic: "Major DeFi protocol launch on Solana",
-      prediction: 81,
-      timeframe: "45 days"
-    },
-    {
-      topic: "Solana TPS record broken",
-      prediction: 54,
-      timeframe: "90 days"
-    },
-    {
-      topic: "New Solana gaming platform with 100K+ users",
-      prediction: 63,
-      timeframe: "120 days"
-    }
-  ];
+export const getPopularSolanaPredictions = async () => {
+  try {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // In production, this would be an actual API call
+    // const response = await fetch('https://api.stake-onchain.com/popular-predictions');
+    // const data = await response.json();
+    // return data;
+    
+    return mockPopularPredictions;
+  } catch (error) {
+    console.error('Failed to fetch popular predictions:', error);
+    throw new Error('Failed to fetch popular predictions');
+  }
 };

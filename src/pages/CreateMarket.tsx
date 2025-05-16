@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/layout/navbar";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { createMarket, getWalletStatus } from "@/services/mockBlockchainService";
+import { createMarket, getWalletStatus, connectWallet } from "@/services/mockBlockchainService";
 import { X, Plus, ArrowRight, Clock } from "lucide-react";
 import { getAIPrediction } from "@/services/aiPredictionService";
 
@@ -133,8 +132,13 @@ export default function CreateMarket() {
     // Check if wallet is connected
     const wallet = getWalletStatus();
     if (!wallet.connected) {
-      setErrors(prev => ({ ...prev, wallet: "Please connect your wallet first" }));
-      return;
+      try {
+        // Try to connect wallet
+        await connectWallet();
+      } catch (error) {
+        setErrors(prev => ({ ...prev, wallet: "Failed to connect wallet. Please try again." }));
+        return;
+      }
     }
     
     if (!validateForm()) return;
@@ -154,11 +158,11 @@ export default function CreateMarket() {
       
       // Navigate to the newly created market
       navigate(`/market/${newMarket.id}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to create market:", error);
       setErrors(prev => ({ 
         ...prev, 
-        submit: "Failed to create market. Please try again." 
+        submit: error.message || "Failed to create market. Please try again." 
       }));
     } finally {
       setIsSubmitting(false);

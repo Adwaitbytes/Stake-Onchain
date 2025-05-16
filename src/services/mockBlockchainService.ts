@@ -1,5 +1,5 @@
-
 import { Market, UserBet } from "../types/market";
+import { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl } from '@solana/web3.js';
 
 // Mock localStorage-based blockchain service for demo purposes
 // In a real app, this would interact with Arbitrum Stylus contracts
@@ -8,6 +8,13 @@ import { Market, UserBet } from "../types/market";
 const MARKETS_KEY = 'aipredict_markets';
 const BETS_KEY = 'aipredict_bets';
 const WALLET_KEY = 'aipredict_wallet';
+
+// Initialize Solana connection with devnet for testing
+const connection = new Connection(clusterApiUrl('devnet'), {
+  commitment: 'confirmed',
+  confirmTransactionInitialTimeout: 60000,
+  wsEndpoint: 'wss://api.devnet.solana.com/'
+});
 
 // Initialize mock storage
 const initStorage = () => {
@@ -21,54 +28,144 @@ const initStorage = () => {
     localStorage.setItem(WALLET_KEY, JSON.stringify({
       connected: false,
       address: '',
-      balance: 10.0 // Initial test ETH
+      balance: 10.0
     }));
   }
 };
 
 // Wallet functions
 export const connectWallet = async (): Promise<{ address: string, balance: number }> => {
-  initStorage();
-  
-  // Generate a mock wallet address if not connected
-  const randomAddress = '0x' + Array(40).fill(0).map(() => 
-    Math.floor(Math.random() * 16).toString(16)).join('');
-  
-  const wallet = {
-    connected: true,
-    address: randomAddress,
-    balance: 10.0
-  };
-  
-  localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
-  
-  // Simulate connection delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  return { address: wallet.address, balance: wallet.balance };
+  try {
+    if (!window.solana) {
+      throw new Error('Phantom wallet not installed');
+    }
+
+    // Check if already connected
+    if (window.solana.isConnected) {
+      const resp = await window.solana.connect({ onlyIfTrusted: true });
+      const publicKey = resp.publicKey.toString();
+      
+      try {
+        const balance = await connection.getBalance(new PublicKey(publicKey));
+        const balanceInSol = balance / LAMPORTS_PER_SOL;
+        
+        const wallet = {
+          connected: true,
+          address: publicKey,
+          balance: balanceInSol
+        };
+        
+        localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
+        
+        return { address: publicKey, balance: balanceInSol };
+      } catch (error) {
+        console.warn('Failed to get balance, using cached value:', error);
+        // Use cached balance if available
+        const cachedWallet = JSON.parse(localStorage.getItem(WALLET_KEY) || '{}');
+        return { 
+          address: publicKey, 
+          balance: cachedWallet.balance || 10.0 
+        };
+      }
+    }
+
+    // If not connected, request connection
+    const resp = await window.solana.connect();
+    const publicKey = resp.publicKey.toString();
+    
+    try {
+      const balance = await connection.getBalance(new PublicKey(publicKey));
+      const balanceInSol = balance / LAMPORTS_PER_SOL;
+      
+      const wallet = {
+        connected: true,
+        address: publicKey,
+        balance: balanceInSol
+      };
+      
+      localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
+      
+      return { address: publicKey, balance: balanceInSol };
+    } catch (error) {
+      console.warn('Failed to get balance, using default value:', error);
+      // Use default balance if balance check fails
+      const wallet = {
+        connected: true,
+        address: publicKey,
+        balance: 10.0
+      };
+      
+      localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
+      
+      return { address: publicKey, balance: 10.0 };
+    }
+  } catch (error) {
+    console.error('Failed to connect wallet:', error);
+    throw new Error('Failed to connect wallet. Please try again.');
+  }
 };
 
-export const disconnectWallet = (): void => {
-  const wallet = {
-    connected: false,
-    address: '',
-    balance: 0
-  };
-  localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
+export const disconnectWallet = async (): Promise<void> => {
+  try {
+    if (window.solana) {
+      await window.solana.disconnect();
+    }
+    
+    const wallet = {
+      connected: false,
+      address: '',
+      balance: 0
+    };
+    localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
+  } catch (error) {
+    console.error('Failed to disconnect wallet:', error);
+    throw error;
+  }
 };
 
-export const getWalletStatus = (): { connected: boolean, address: string, balance: number } => {
-  initStorage();
-  return JSON.parse(localStorage.getItem(WALLET_KEY) || '{"connected":false,"address":"","balance":0}');
+export const getWalletStatus = async (): Promise<{ connected: boolean, address: string, balance: number }> => {
+  try {
+    if (!window.solana) {
+      return { connected: false, address: '', balance: 0 };
+    }
+
+    // Check if already connected
+    if (window.solana.isConnected) {
+      const resp = await window.solana.connect({ onlyIfTrusted: true });
+      const publicKey = resp.publicKey.toString();
+      
+      try {
+        const balance = await connection.getBalance(new PublicKey(publicKey));
+        const balanceInSol = balance / LAMPORTS_PER_SOL;
+
+        const wallet = {
+          connected: true,
+          address: publicKey,
+          balance: balanceInSol
+        };
+
+        localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
+        return wallet;
+      } catch (error) {
+        console.warn('Failed to get balance, using cached value:', error);
+        // Use cached wallet data if available
+        const cachedWallet = JSON.parse(localStorage.getItem(WALLET_KEY) || '{}');
+        if (cachedWallet.connected && cachedWallet.address === publicKey) {
+          return cachedWallet;
+        }
+      }
+    }
+
+    return { connected: false, address: '', balance: 0 };
+  } catch (error) {
+    console.error('Failed to get wallet status:', error);
+    return { connected: false, address: '', balance: 0 };
+  }
 };
 
 // Market functions
 export const getMarkets = async (): Promise<Market[]> => {
   initStorage();
-  
-  // Simulate blockchain delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
   return JSON.parse(localStorage.getItem(MARKETS_KEY) || '[]');
 };
 
@@ -83,9 +180,7 @@ export const createMarket = async (
   endTime: number,
   tags: string[]
 ): Promise<Market> => {
-  initStorage();
-  
-  const wallet = getWalletStatus();
+  const wallet = await getWalletStatus();
   if (!wallet.connected) throw new Error('Wallet not connected');
   
   const markets = await getMarkets();
@@ -100,16 +195,35 @@ export const createMarket = async (
     totalYesBets: 0,
     totalNoBets: 0,
     tags,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    status: 'active'
   };
   
   markets.push(newMarket);
   localStorage.setItem(MARKETS_KEY, JSON.stringify(markets));
   
-  // Simulate transaction delay
-  await new Promise(resolve => setTimeout(resolve, 1200));
-  
   return newMarket;
+};
+
+export const deleteMarket = async (marketId: string): Promise<void> => {
+  const wallet = await getWalletStatus();
+  if (!wallet.connected) throw new Error('Wallet not connected');
+  
+  const markets = await getMarkets();
+  const marketIndex = markets.findIndex(m => m.id === marketId);
+  
+  if (marketIndex === -1) throw new Error('Market not found');
+  if (markets[marketIndex].creator !== wallet.address) throw new Error('Not the market creator');
+  if (markets[marketIndex].resolved) throw new Error('Cannot delete resolved market');
+  
+  // Remove market
+  markets.splice(marketIndex, 1);
+  localStorage.setItem(MARKETS_KEY, JSON.stringify(markets));
+  
+  // Remove associated bets
+  const bets: UserBet[] = JSON.parse(localStorage.getItem(BETS_KEY) || '[]');
+  const updatedBets = bets.filter(bet => bet.marketId !== marketId);
+  localStorage.setItem(BETS_KEY, JSON.stringify(updatedBets));
 };
 
 export const placeBet = async (
@@ -117,57 +231,66 @@ export const placeBet = async (
   amount: number,
   prediction: boolean
 ): Promise<UserBet> => {
-  initStorage();
-  
-  const wallet = getWalletStatus();
+  const wallet = await getWalletStatus();
   if (!wallet.connected) throw new Error('Wallet not connected');
   if (wallet.balance < amount) throw new Error('Insufficient balance');
   
-  const markets = await getMarkets();
-  const marketIndex = markets.findIndex(m => m.id === marketId);
-  
-  if (marketIndex === -1) throw new Error('Market not found');
-  if (markets[marketIndex].resolved) throw new Error('Market already resolved');
-  if (markets[marketIndex].endTime < Date.now()) throw new Error('Market expired');
-  
-  // Update market totals
-  if (prediction) {
-    markets[marketIndex].totalYesBets += amount;
-  } else {
-    markets[marketIndex].totalNoBets += amount;
+  try {
+    // Create and sign transaction
+    const transaction = new Transaction().add(
+      SystemProgram.transfer({
+        fromPubkey: new PublicKey(wallet.address),
+        toPubkey: new PublicKey(process.env.VITE_PLATFORM_WALLET || ''),
+        lamports: amount * LAMPORTS_PER_SOL
+      })
+    );
+    
+    const signed = await window.solana.signTransaction(transaction);
+    const signature = await connection.sendRawTransaction(signed.serialize());
+    await connection.confirmTransaction(signature);
+    
+    const markets = await getMarkets();
+    const marketIndex = markets.findIndex(m => m.id === marketId);
+    
+    if (marketIndex === -1) throw new Error('Market not found');
+    if (markets[marketIndex].resolved) throw new Error('Market already resolved');
+    if (markets[marketIndex].endTime < Date.now()) throw new Error('Market expired');
+    
+    // Update market totals
+    if (prediction) {
+      markets[marketIndex].totalYesBets += amount;
+    } else {
+      markets[marketIndex].totalNoBets += amount;
+    }
+    
+    localStorage.setItem(MARKETS_KEY, JSON.stringify(markets));
+    
+    // Create bet record
+    const bets: UserBet[] = JSON.parse(localStorage.getItem(BETS_KEY) || '[]');
+    
+    const newBet: UserBet = {
+      marketId,
+      userAddress: wallet.address,
+      amount,
+      prediction,
+      timestamp: Date.now(),
+      claimed: false
+    };
+    
+    bets.push(newBet);
+    localStorage.setItem(BETS_KEY, JSON.stringify(bets));
+    
+    return newBet;
+  } catch (error) {
+    console.error('Failed to place bet:', error);
+    throw error;
   }
-  
-  localStorage.setItem(MARKETS_KEY, JSON.stringify(markets));
-  
-  // Create bet record
-  const bets: UserBet[] = JSON.parse(localStorage.getItem(BETS_KEY) || '[]');
-  
-  const newBet: UserBet = {
-    marketId,
-    userAddress: wallet.address,
-    amount,
-    prediction,
-    timestamp: Date.now(),
-    claimed: false
-  };
-  
-  bets.push(newBet);
-  localStorage.setItem(BETS_KEY, JSON.stringify(bets));
-  
-  // Update wallet balance
-  wallet.balance -= amount;
-  localStorage.setItem(WALLET_KEY, JSON.stringify(wallet));
-  
-  // Simulate transaction delay
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  return newBet;
 };
 
 export const getUserBets = async (marketId?: string): Promise<UserBet[]> => {
   initStorage();
   
-  const wallet = getWalletStatus();
+  const wallet = await getWalletStatus();
   if (!wallet.connected) return [];
   
   const bets: UserBet[] = JSON.parse(localStorage.getItem(BETS_KEY) || '[]');
@@ -179,9 +302,7 @@ export const getUserBets = async (marketId?: string): Promise<UserBet[]> => {
 };
 
 export const resolveMarket = async (marketId: string, result: boolean): Promise<Market> => {
-  initStorage();
-  
-  const wallet = getWalletStatus();
+  const wallet = await getWalletStatus();
   if (!wallet.connected) throw new Error('Wallet not connected');
   
   const markets = await getMarkets();
@@ -191,13 +312,53 @@ export const resolveMarket = async (marketId: string, result: boolean): Promise<
   if (markets[marketIndex].resolved) throw new Error('Market already resolved');
   if (markets[marketIndex].creator !== wallet.address) throw new Error('Not the market creator');
   
+  // Update market status
   markets[marketIndex].resolved = true;
   markets[marketIndex].result = result;
+  markets[marketIndex].status = 'resolved';
   
+  // Get all bets for this market
+  const bets: UserBet[] = JSON.parse(localStorage.getItem(BETS_KEY) || '[]');
+  const marketBets = bets.filter(bet => bet.marketId === marketId);
+  
+  // Calculate total pool and winning pool
+  const totalPool = markets[marketIndex].totalYesBets + markets[marketIndex].totalNoBets;
+  const winningPool = result ? markets[marketIndex].totalYesBets : markets[marketIndex].totalNoBets;
+  const losingPool = result ? markets[marketIndex].totalNoBets : markets[marketIndex].totalYesBets;
+  
+  // Process winnings for each winning bet
+  for (const bet of marketBets) {
+    if (bet.prediction === result && !bet.claimed) {
+      const userProportion = bet.amount / winningPool;
+      const winnings = bet.amount + (losingPool * userProportion);
+      
+      try {
+        // Create and sign transaction for winnings
+        const transaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: new PublicKey(process.env.VITE_PLATFORM_WALLET || ''),
+            toPubkey: new PublicKey(bet.userAddress),
+            lamports: winnings * LAMPORTS_PER_SOL
+          })
+        );
+        
+        const signed = await window.solana.signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signed.serialize());
+        await connection.confirmTransaction(signature);
+        
+        // Mark bet as claimed
+        bet.claimed = true;
+      } catch (error) {
+        console.error('Failed to send winnings:', error);
+      }
+    }
+  }
+  
+  // Save updated bets
+  localStorage.setItem(BETS_KEY, JSON.stringify(bets));
+  
+  // Save updated markets
   localStorage.setItem(MARKETS_KEY, JSON.stringify(markets));
-  
-  // Simulate transaction delay
-  await new Promise(resolve => setTimeout(resolve, 1200));
   
   return markets[marketIndex];
 };
@@ -205,7 +366,7 @@ export const resolveMarket = async (marketId: string, result: boolean): Promise<
 export const claimWinnings = async (marketId: string): Promise<{ claimed: boolean, amount: number }> => {
   initStorage();
   
-  const wallet = getWalletStatus();
+  const wallet = await getWalletStatus();
   if (!wallet.connected) throw new Error('Wallet not connected');
   
   const markets = await getMarkets();
