@@ -14,6 +14,7 @@ import CoinFlip from "./pages/games/CoinFlip";
 import Dice from "./pages/games/Dice";
 import SolanaInsights from "./pages/SolanaInsights";
 import NotFound from "./pages/NotFound";
+import { Analytics } from '@vercel/analytics/react';
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => {
   }, []);
   
   return (
+    <div>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -51,6 +53,8 @@ const App = () => {
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
+    <Analytics />
+    </div>
   );
 };
 
