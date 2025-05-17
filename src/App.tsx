@@ -14,13 +14,12 @@ import CoinFlip from "./pages/games/CoinFlip";
 import Dice from "./pages/games/Dice";
 import SolanaInsights from "./pages/SolanaInsights";
 import NotFound from "./pages/NotFound";
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/react'; // Already imported
 
 const queryClient = new QueryClient();
 
 const App = () => {
   useEffect(() => {
-    // Initialize blockchain connection
     const initialize = async () => {
       try {
         await initBlockchain();
@@ -28,12 +27,11 @@ const App = () => {
         console.error("Failed to initialize blockchain:", error);
       }
     };
-    
+
     initialize();
   }, []);
-  
+
   return (
-    <div>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
@@ -51,10 +49,9 @@ const App = () => {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        <Analytics /> {/* Add this here */}
       </TooltipProvider>
     </QueryClientProvider>
-    <Analytics />
-    </div>
   );
 };
 
